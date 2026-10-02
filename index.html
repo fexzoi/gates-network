@@ -15,7 +15,6 @@
             --surface-card: #111827;
             --border-color: #1f2937;
             --border-hover: #374151;
-            /* Tuned to match your neon blue/purple logo gradient */
             --accent: #7c3aed;
             --accent-hover: #6d28d9;
             --accent-glow: rgba(124, 58, 237, 0.25);
@@ -65,14 +64,15 @@
         .brand-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .brand-logo-img {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
             object-fit: cover;
+            border: 1px solid var(--border-color);
         }
 
         .brand-title {
@@ -297,7 +297,7 @@
         <div class="view active" id="authView">
             <div class="card" style="max-width: 400px; margin: 80px auto; text-align: center;">
                 <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 12px;">
-                    <img src="https://fexzoi.github.io/gates-network/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover;">
+                    <img src="https://raw.githubusercontent.com/fexzoi/gates-network/main/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" class="brand-logo-img" style="width: 44px; height: 44px;">
                     <div class="brand-title" style="font-size: 20px;">Gates Network</div>
                 </div>
                 <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 24px;" id="authSubTitle">Secure Enterprise Access</p>
@@ -307,7 +307,7 @@
                     <input type="text" id="authIdentifier" class="input-field" placeholder="@username">
                 </div>
                 <div class="form-group" style="text-align: left;">
-                    <label>Passkey</label>
+                    <label>Passkey / Password</label>
                     <input type="password" id="authPassword" class="input-field" placeholder="••••••••">
                 </div>
 
@@ -325,7 +325,7 @@
             <!-- Navbar -->
             <div class="navbar">
                 <div class="brand-container">
-                    <img src="https://fexzoi.github.io/gates-network/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" class="brand-logo-img">
+                    <img src="https://raw.githubusercontent.com/fexzoi/gates-network/main/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" class="brand-logo-img">
                     <div class="brand-title">Gates Network</div>
                 </div>
                 <div class="nav-menu-center">
@@ -379,7 +379,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: MARKETPLACE (Clean & Empty By Default) -->
+            <!-- TAB 2: MARKETPLACE -->
             <div class="panel" id="marketTab">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -416,7 +416,7 @@
                     </div>
 
                     <div id="middlemenGrid" class="market-grid">
-                        <!-- Empty by default as requested -->
+                        <!-- Empty by default -->
                     </div>
                 </div>
             </div>
@@ -530,7 +530,6 @@
             buttonRootId: 'ton-connect-btn'
         });
 
-        // Clean lists by default as requested
         let usernamesData = [];
         let userInventory = [];
         let middlemenData = [];
@@ -558,23 +557,58 @@
             document.getElementById('authToggleText').innerHTML = isSignUp 
                 ? `Existing user? <a onclick="toggleAuthMode()" style="color:#fff; text-decoration:underline; cursor:pointer;">Sign in</a>` 
                 : `New user? <a onclick="toggleAuthMode()" style="color:#fff; text-decoration:underline; cursor:pointer;">Create account</a>`;
+            
+            // Refresh/clear fields when switching mode
+            document.getElementById('authIdentifier').value = '';
+            document.getElementById('authPassword').value = '';
         }
 
         function handleAuthSubmit() {
             const identifier = document.getElementById('authIdentifier').value.trim();
-            if (!identifier) {
-                alert('Please enter your identity identifier.');
+            const password = document.getElementById('authPassword').value.trim();
+
+            if (!identifier || !password) {
+                alert('Please fill in both your Telegram handle and passkey.');
                 return;
             }
-            currentUserHandle = identifier.startsWith('@') ? identifier : '@' + identifier;
-            document.getElementById('drawerHandle').innerText = currentUserHandle;
-            document.getElementById('authView').classList.remove('active');
-            document.getElementById('dashboardView').classList.add('active');
+
+            const cleanHandle = identifier.startsWith('@') ? identifier : '@' + identifier;
+            let registeredUsers = JSON.parse(localStorage.getItem('gates_users') || '{}');
+
+            if (isSignUp) {
+                // Register new account
+                if (registeredUsers[cleanHandle]) {
+                    alert('This Telegram handle is already registered. Please sign in.');
+                    return;
+                }
+                registeredUsers[cleanHandle] = password;
+                localStorage.setItem('gates_users', JSON.stringify(registeredUsers));
+                alert('Account successfully created! You can now sign in.');
+                toggleAuthMode();
+                return;
+            } else {
+                // Strict Login Verification
+                if (!registeredUsers[cleanHandle]) {
+                    alert('Account not found. Please create an account first.');
+                    return;
+                }
+                if (registeredUsers[cleanHandle] !== password) {
+                    alert('Incorrect password/passkey.');
+                    return;
+                }
+
+                currentUserHandle = cleanHandle;
+                document.getElementById('drawerHandle').innerText = currentUserHandle;
+                document.getElementById('authView').classList.remove('active');
+                document.getElementById('dashboardView').classList.add('active');
+            }
         }
 
         function logoutSession() {
             document.getElementById('dashboardView').classList.remove('active');
             document.getElementById('authView').classList.add('active');
+            document.getElementById('authIdentifier').value = '';
+            document.getElementById('authPassword').value = '';
             toggleDrawer(false);
         }
 
