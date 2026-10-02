@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gates Network</title>
-    <!-- Telegram Web App Script -->
+    <title>Gates Network Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --border-color: #1f2937;
             --text-main: #ffffff;
-            --text-muted: #a0a0a0;
-            --accent-glow: #ffffff;
-            --btn-bg: #ffffff;
-            --btn-text: #000000;
+            --text-muted: #9ca3af;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
+            background-color: var(--bg-color);
             color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,138 +33,184 @@
 
         .container {
             width: 100%;
-            max-width: 420px;
-            animation: fadeIn 0.8s ease-out;
+            max-width: 440px;
+            animation: fadeIn 0.4s ease-out;
         }
 
-        /* Header Animation */
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            animation: slideDown 0.6s ease-out;
-        }
-
-        h1 {
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin: 0 0 5px 0;
-            background: linear-gradient(90deg, #fff, #777);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin: 0;
-        }
-
-        /* Glassmorphism Cards */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 18px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .card h3 {
-            font-size: 16px;
-            margin: 0 0 8px 0;
+        /* Header */
+        .header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
         }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 13px;
-            line-height: 1.5;
+        .logo-area h1 {
+            font-size: 20px;
             margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
-
-        /* Animated Buttons */
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
+        .logo-area span {
+            font-size: 11px;
+            color: var(--text-muted);
         }
-
-        .btn {
-            background-color: var(--btn-bg);
-            color: var(--btn-text);
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 15px;
+        .wallet-badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid var(--accent);
+            color: #818cf8;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+        }
+
+        /* Cards & Sections */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .card h3 {
+            margin-top: 0;
+            font-size: 15px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
         }
 
-        .btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 25px rgba(255, 255, 255, 0.2);
+        /* Tabs / Navigation */
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 10px 4px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
         }
 
-        .btn:active {
-            transform: scale(0.98);
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .input-field, select.input-field {
+            width: 100%;
+            background: #030712;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 10px 0;
+            cursor: pointer;
         }
 
-        .btn-outline {
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn-secondary {
             background: transparent;
+            border: 1px solid var(--border-color);
             color: var(--text-main);
-            border: 1px solid var(--card-border);
-            box-shadow: none;
         }
 
-        .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: var(--text-main);
+        /* Username Marketplace (Fragment Style) */
+        .username-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .username-card {
+            background: #030712;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .username-info h4 { margin: 0 0 4px 0; font-size: 15px; color: #fff; }
+        .username-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
+        .price-tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
         }
 
-        /* Footer / Status Indicator */
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            background-color: #00ff88;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 8px #00ff88;
+        /* Middleman list */
+        .mm-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #030712;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
         }
+        .verified-badge { color: var(--success); font-size: 11px; font-weight: bold; }
 
         footer {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 25px;
             color: var(--text-muted);
             font-size: 11px;
         }
 
-        /* Keyframes for Smooth Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-15px); }
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
@@ -173,77 +219,255 @@
 
     <div class="container">
         <!-- Header -->
-        <header>
-            <h1 id="welcomeTitle">Gates Network</h1>
-            <p class="subtitle">Next-Gen Decentralized Ecosystem</p>
-        </header>
-
-        <!-- User Profile Card -->
-        <div class="card">
-            <h3><span class="status-dot"></span> <span id="username">Loading Profile...</span></h3>
-            <p>Your connection to the Gates ecosystem is secure, encrypted, and optimized for Telegram.</p>
+        <div class="header">
+            <div class="logo-area">
+                <h1>Gates Network</h1>
+                <span>Ecosystem & Marketplace</span>
+            </div>
+            <div class="wallet-badge" id="walletBtn" onclick="connectWallet()">
+                🔌 Connect Wallet
+            </div>
         </div>
 
-        <!-- Network Details Card -->
-        <div class="card">
-            <h3>⚡ Network Specifications</h3>
-            <p>Gates Network delivers high-speed routing, automated tool distribution, and secure node connectivity built directly for community-driven applications.</p>
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="tab-btn active" onclick="switchTab('authTab')" id="btnAuthTab">Account</div>
+            <div class="tab-btn" onclick="switchTab('marketTab')" id="btnMarketTab">Usernames</div>
+            <div class="tab-btn" onclick="switchTab('mmTab')" id="btnMmTab">Middlemen</div>
         </div>
 
-        <!-- Support / Contact Card -->
-        <div class="card">
-            <h3>🛠️ Support & Assistance</h3>
-            <p>Need help or have questions? Reach out directly to our administration team:</p>
-            <p style="margin-top: 8px;">
-                📧 <b>Email:</b> officalteamxeno1@gmail.com<br>
-                💬 <b>Telegram:</b> @feust
-            </p>
+        <!-- TAB 1: AUTHENTICATION (Sign In / Sign Up) -->
+        <div class="view-section active" id="authTab">
+            <div class="card" id="authCard">
+                <h3 id="authTitle">🔐 Sign In to Gates</h3>
+                <div id="authFormContent">
+                    <div class="form-group">
+                        <label>Telegram / Email Identifier</label>
+                        <input type="text" id="authEmail" class="input-field" placeholder="Enter username or email">
+                    </div>
+                    <div class="form-group">
+                        <label>Security Password / PIN</label>
+                        <input type="password" id="authPass" class="input-field" placeholder="••••••••">
+                    </div>
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="rememberMe"> Remember me on this device
+                    </label>
+                    <button class="btn" onclick="handleAuth()" id="authActionBtn">Sign In</button>
+                    <p style="text-align: center; font-size: 12px; margin-top: 12px; color: var(--text-muted);">
+                        <span id="switchAuthModeText">Don't have an account? <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none;">Sign Up</a></span>
+                    </p>
+                </div>
+                <div id="userProfileView" style="display: none; text-align: center;">
+                    <p style="color: var(--success); font-weight: bold;">✔ Active Session Verified</p>
+                    <p id="loggedInUserDisplay" style="font-size: 14px; margin: 10px 0;"></p>
+                    <button class="btn btn-secondary" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🛠️ Official Support Contacts</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 8px 0;">Need administrative assistance or escrow service?</p>
+                <p style="font-size: 13px; margin: 4px 0;">📧 <b>Email:</b> officalteamxeno1@gmail.com</p>
+                <p style="font-size: 13px; margin: 4px 0;">💬 <b>Telegram:</b> @feust</p>
+            </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="btn-group">
-            <button class="btn" id="exploreBtn">
-                Explore Network Hub
-            </button>
-            <button class="btn btn-outline" id="supportBtn">
-                Contact Support
-            </button>
+        <!-- TAB 2: USERNAME MARKETPLACE (Fragment Style) -->
+        <div class="view-section" id="marketTab">
+            <div class="card">
+                <h3>🏷️ Fragment Username Store</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Buy and sell verified Telegram handles securely using Fragment protocols.</p>
+                <button class="btn" onclick="openListingModal()" style="margin-bottom: 15px; background: #10b981;">+ List Your Username</button>
+                
+                <div class="username-grid" id="usernameListContainer">
+                    <!-- Sample Item 1 -->
+                    <div class="username-card">
+                        <div class="username-info">
+                            <h4>@crypto</h4>
+                            <p>Owner: @feust • Verified Node</p>
+                        </div>
+                        <div class="price-tag">150 TON</div>
+                    </div>
+                    <!-- Sample Item 2 -->
+                    <div class="username-card">
+                        <div class="username-info">
+                            <h4>@gateway</h4>
+                            <p>Owner: @admin • Secure Escrow</p>
+                        </div>
+                        <div class="price-tag">500 ⭐ Stars</div>
+                    </div>
+                    <!-- Sample Item 3 -->
+                    <div class="username-card">
+                        <div class="username-info">
+                            <h4>@xeno</h4>
+                            <p>Owner: @teamxeno • Instant Transfer</p>
+                        </div>
+                        <div class="price-tag">₹12,000 INR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TRUSTED MIDDLEMEN -->
+        <div class="view-section" id="mmTab">
+            <div class="card">
+                <h3>🛡️ Trusted Middlemen Directory</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Always use these official verified brokers for high-value transactions to avoid scams.</p>
+                
+                <div class="mm-item">
+                    <div>
+                        <b style="font-size: 14px;">Team Xeno Escrow</b>
+                        <div style="font-size: 11px; color: var(--text-muted);">Main Network Mediator</div>
+                    </div>
+                    <div class="verified-badge">✔ VERIFIED</div>
+                </div>
+
+                <div class="mm-item">
+                    <div>
+                        <b style="font-size: 14px;">Feust (Admin)</b>
+                        <div style="font-size: 11px; color: var(--text-muted);">TG: @feust</div>
+                    </div>
+                    <div class="verified-badge">✔ VERIFIED</div>
+                </div>
+
+                <div class="mm-item">
+                    <div>
+                        <b style="font-size: 14px;">Gates Support Desk</b>
+                        <div style="font-size: 11px; color: var(--text-muted);">officalteamxeno1@gmail.com</div>
+                    </div>
+                    <div class="verified-badge">✔ OFFICIAL</div>
+                </div>
+            </div>
         </div>
 
         <footer>
-            Gates Network • Powered by Telegram Mini Apps
+            Gates Network Ecosystem • Secured by Telegram WebApp
         </footer>
     </div>
 
     <script>
-        // Initialize Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
-        // Personalized Greeting based on Telegram User
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const firstName = tg.initDataUnsafe.user.first_name;
-            document.getElementById('username').innerText = `Welcome, ${firstName}`;
-        } else {
-            document.getElementById('username').innerText = `Welcome, Network User`;
+        let isSignUpMode = false;
+
+        // Check Local Storage / "Remember Me" on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('gates_remembered_user');
+            if (savedUser) {
+                document.getElementById('authEmail').value = savedUser;
+                document.getElementById('rememberMe').checked = true;
+                showLoggedInView(savedUser);
+            } else if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                // Auto pre-fill telegram username if available
+                document.getElementById('authEmail').value = '@' + tg.initDataUnsafe.user.username;
+            }
+        });
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            if(tabId === 'authTab') document.getElementById('btnAuthTab').classList.add('active');
+            if(tabId === 'marketTab') document.getElementById('btnMarketTab').classList.add('active');
+            if(tabId === 'mmTab') document.getElementById('btnMmTab').classList.add('active');
         }
 
-        // Button Interactions with Telegram Haptics
-        document.getElementById('exploreBtn').addEventListener('click', () => {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-            tg.showAlert('Gates Network Hub is active and fully functional!');
-        });
+        // Toggle Sign In vs Sign Up
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const title = document.getElementById('authTitle');
+            const btn = document.getElementById('authActionBtn');
+            const modeText = document.getElementById('switchAuthModeText');
 
-        document.getElementById('supportBtn').addEventListener('click', () => {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+            if (isSignUpMode) {
+                title.innerText = "📝 Create Gates Account";
+                btn.innerText = "Sign Up";
+                modeText.innerHTML = `Already have an account? <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none;">Sign In</a>`;
+            } else {
+                title.innerText = "🔐 Sign In to Gates";
+                btn.innerText = "Sign In";
+                modeText.innerHTML = `Don't have an account? <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); text-decoration: none;">Sign Up</a>`;
             }
-            // Opens telegram link or user profile directly
-            window.open('https://t.me/feust', '_blank');
-        });
+        }
+
+        // Handle Sign In / Sign Up submission
+        function handleAuth() {
+            const identifier = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPass').value.trim();
+            const remember = document.getElementById('rememberMe').checked;
+
+            if (!identifier || !pass) {
+                tg.showAlert("Please fill in all authentication fields.");
+                return;
+            }
+
+            if (remember) {
+                localStorage.setItem('gates_remembered_user', identifier);
+            } else {
+                localStorage.removeItem('gates_remembered_user');
+            }
+
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert(isSignUpMode ? "Account created successfully!" : "Signed in successfully!");
+            showLoggedInView(identifier);
+        }
+
+        function showLoggedInView(username) {
+            document.getElementById('authFormContent').style.display = 'none';
+            document.getElementById('userProfileView').style.display = 'block';
+            document.getElementById('loggedInUserDisplay').innerText = `Logged in as: ${username}`;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('gates_remembered_user');
+            document.getElementById('authFormContent').style.display = 'block';
+            document.getElementById('userProfileView').style.display = 'none';
+            document.getElementById('authPass').value = '';
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        // Connect Wallet Simulation (Fragment Style)
+        function connectWallet() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            const walletBtn = document.getElementById('walletBtn');
+            walletBtn.innerText = "🟢 Connected (TON)";
+            walletBtn.style.borderColor = "#10b981";
+            walletBtn.style.color = "#10b981";
+            tg.showAlert("Telegram Wallet / Fragment connection established successfully!");
+        }
+
+        // Username Listing Function with Multiple Currencies
+        function openListingModal() {
+            const username = prompt("Enter the Telegram username to list (e.g., @myname):");
+            if (!username) return;
+
+            const currency = prompt("Choose currency option (Type one: INR, USDT, TON, CRYPTO, STARS):");
+            if (!currency) return;
+
+            const price = prompt(`Enter price for ${username} in ${currency.toUpperCase()}:`);
+            if (!price) return;
+
+            // Append new listing to marketplace grid
+            const container = document.getElementById('usernameListContainer');
+            const card = document.createElement('div');
+            card.className = 'username-card';
+            card.innerHTML = `
+                <div class="username-info">
+                    <h4>${username.startsWith('@') ? username : '@' + username}</h4>
+                    <p>Owner: Verified • Fragment Escrow</p>
+                </div>
+                <div class="price-tag">${price} ${currency.toUpperCase()}</div>
+            `;
+            container.prepend(card);
+            
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert("Username listed successfully on the marketplace!");
+            switchTab('marketTab');
+        }
     </script>
 </body>
 </html>
