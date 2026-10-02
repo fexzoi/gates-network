@@ -15,9 +15,10 @@
             --surface-card: #111827;
             --border-color: #1f2937;
             --border-hover: #374151;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --accent-glow: rgba(99, 102, 241, 0.2);
+            /* Tuned to match your neon blue/purple logo gradient */
+            --accent: #7c3aed;
+            --accent-hover: #6d28d9;
+            --accent-glow: rgba(124, 58, 237, 0.25);
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
             --success: #10b981;
@@ -54,16 +55,29 @@
             background: var(--surface-main);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 14px 24px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
         }
 
-        .brand-logo {
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .brand-title {
             font-weight: 800;
-            font-size: 16px;
+            font-size: 15px;
             letter-spacing: 1.5px;
             color: #fff;
             text-transform: uppercase;
@@ -144,9 +158,7 @@
             box-shadow: 0 4px 14px var(--accent-glow);
         }
 
-        .btn:active {
-            transform: translateY(0px);
-        }
+        .btn:active { transform: translateY(0px); }
 
         .btn-outline {
             background: transparent;
@@ -157,10 +169,10 @@
 
         .btn-outline:hover {
             border-color: var(--accent);
-            background: rgba(99, 102, 241, 0.05);
+            background: rgba(124, 58, 237, 0.05);
         }
 
-        /* General Card & Panels */
+        /* Cards & Panels */
         .card {
             background: var(--surface-main);
             border: 1px solid var(--border-color);
@@ -172,7 +184,7 @@
         .panel { display: none; }
         .panel.active { display: flex; flex-direction: column; flex: 1; gap: 16px; }
 
-        /* Marketplace Split Layout (Left & Right) */
+        /* Marketplace Split Layout */
         .market-split-container {
             display: grid;
             grid-template-columns: 260px 1fr;
@@ -228,12 +240,12 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: border-color 0.2s, transform 0.1s;
+            transition: border-color 0.2s;
         }
         .market-card:hover { border-color: var(--border-hover); }
 
         .tag {
-            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 6px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #a78bfa; font-weight: 700; margin-bottom: 6px;
         }
 
         /* Forms & Inputs */
@@ -247,11 +259,11 @@
         .input-field:focus { border-color: var(--accent); }
 
         .notice-box {
-            background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);
+            background: rgba(124, 58, 237, 0.05); border: 1px solid rgba(124, 58, 237, 0.2);
             padding: 12px 14px; border-radius: 8px; font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;
         }
 
-        /* Modals & Slide Drawers */
+        /* Modals & Drawers */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(4px);
@@ -262,7 +274,6 @@
             padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
 
-        /* Side Drawer for User Profile & Inventory */
         .drawer-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(3, 7, 18, 0.7); backdrop-filter: blur(3px);
@@ -282,10 +293,13 @@
 
     <div class="app-container">
 
-        <!-- ================= VIEW 1: AUTHENTICATION PORTAL ================= -->
+        <!-- ================= AUTHENTICATION PORTAL ================= -->
         <div class="view active" id="authView">
             <div class="card" style="max-width: 400px; margin: 80px auto; text-align: center;">
-                <div class="brand-logo" style="font-size: 22px; margin-bottom: 8px;">Gates Network</div>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <img src="https://fexzoi.github.io/gates-network/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover;">
+                    <div class="brand-title" style="font-size: 20px;">Gates Network</div>
+                </div>
                 <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 24px;" id="authSubTitle">Secure Enterprise Access</p>
 
                 <div class="form-group" style="text-align: left;">
@@ -305,19 +319,21 @@
             </div>
         </div>
 
-        <!-- ================= VIEW 2: MAIN DASHBOARD ================= -->
+        <!-- ================= MAIN DASHBOARD ================= -->
         <div class="view" id="dashboardView">
             
             <!-- Navbar -->
             <div class="navbar">
-                <div class="brand-logo">Gates Network</div>
+                <div class="brand-container">
+                    <img src="https://fexzoi.github.io/gates-network/ChatGPT%20Image%20Oct%202,%202026,%2012_01_32%20PM.png" alt="Gates Logo" class="brand-logo-img">
+                    <div class="brand-title">Gates Network</div>
+                </div>
                 <div class="nav-menu-center">
                     <button class="nav-btn active" onclick="switchMainTab('homeTab', this)">Home</button>
                     <button class="nav-btn" onclick="switchMainTab('marketTab', this)">Marketplace</button>
                     <button class="nav-btn" onclick="switchMainTab('middlemenTab', this)">Middlemen</button>
                 </div>
                 <div class="nav-right-actions">
-                    <!-- Ton Connect UI Button Container -->
                     <div id="ton-connect-btn"></div>
                     <button class="hamburger-btn" onclick="toggleDrawer(true)" title="Menu">
                         <span></span>
@@ -327,38 +343,43 @@
                 </div>
             </div>
 
-            <!-- TAB 1: HOME & NETWORK INFO -->
+            <!-- TAB 1: HOME & NETWORK INFORMATION -->
             <div class="panel active" id="homeTab">
                 <div class="card">
-                    <h2 style="margin: 0 0 8px 0; font-size: 18px;">Protocol Architecture & Secure Escrow</h2>
-                    <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-                        Gates Network is a high-end decentralized marketplace built for secure Telegram and Instagram handle trading. Featuring integrated TON Connect cryptographic wallet authorization, automated smart-contract escrow routing, and strict verification protocols.
+                    <h2 style="margin: 0 0 10px 0; font-size: 18px;">Network Information & Heritage</h2>
+                    <p style="color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 24px;">
+                        Gates Network is a premier Telegram-based community established on July 29, 2020, originally operating under the designation <strong>Team Xeno</strong> within the social media management and security ecosystem. From 2020 through 2023, Team Xeno specialized in advanced technical experiments and delivering high-value operational resources across the South Asian digital community. In 2026, Team Xeno officially evolved into <strong>Gates Network</strong>, expanding its institutional footprint seamlessly across Instagram and Telegram ecosystems. With over 1,000 elite members spanning across Asia, Gates Network stands as a preeminent authority in digital community infrastructure and secure escrow trade.
                     </p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px;">
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
                         <div class="stats-row">
-                            <span>Platform Security Fee</span>
-                            <strong style="color: #fff;">1.0% Auto-Split</strong>
+                            <span>Founding Date</span>
+                            <strong style="color: #fff;">29 July 2020</strong>
                         </div>
                         <div class="stats-row">
-                            <span>Active Protocol</span>
-                            <strong style="color: var(--success);">TON Connect v2</strong>
+                            <span>Founder</span>
+                            <strong style="color: #fff;">fexzoi</strong>
                         </div>
                         <div class="stats-row">
-                            <span>Network Settlement</span>
-                            <strong style="color: #fff;">Instant Escrow</strong>
+                            <span>Previous Heritage</span>
+                            <strong style="color: #fff;">Team Xeno</strong>
+                        </div>
+                        <div class="stats-row">
+                            <span>Community Reach</span>
+                            <strong style="color: var(--success);">1,000+ Members (Asia)</strong>
                         </div>
                     </div>
 
-                    <h3 style="font-size: 15px; margin-bottom: 8px;">Support & Contact Desk</h3>
-                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 14px;">Need manual mediation or dispute resolution? Reach out to verified support officers.</p>
+                    <h3 style="font-size: 15px; margin-bottom: 8px;">Support & Assistance Desk</h3>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 14px;">Need manual mediation or dispute resolution? Reach out directly to verified network officers.</p>
                     <div style="display: flex; gap: 12px; max-width: 480px;">
                         <input type="text" class="input-field" placeholder="Describe your inquiry..." id="supportInput">
-                        <button class="btn" onclick="submitSupportTicket()">Submit</button>
+                        <button class="btn" onclick="submitSupportTicket()">Submit Ticket</button>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 2: MARKETPLACE (Left/Right Split View) -->
+            <!-- TAB 2: MARKETPLACE (Clean & Empty By Default) -->
             <div class="panel" id="marketTab">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -370,22 +391,20 @@
                     </div>
 
                     <div class="market-split-container">
-                        <!-- Left Sidebar Categories -->
                         <div class="market-sidebar">
                             <button class="category-tab-btn active" onclick="filterMarketCategory('All', this)">All Categories</button>
                             <button class="category-tab-btn" onclick="filterMarketCategory('Instagram', this)">Instagram Handles</button>
                             <button class="category-tab-btn" onclick="filterMarketCategory('Telegram', this)">Telegram Handles</button>
                         </div>
 
-                        <!-- Right Grid Listings -->
                         <div class="market-grid" id="usernameGrid">
-                            <!-- Populated dynamically -->
+                            <!-- Clean and empty by default -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: TRUSTED MIDDLEMEN DIRECTORY -->
+            <!-- TAB 3: TRUSTED MIDDLEMEN -->
             <div class="panel" id="middlemenTab">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -406,7 +425,7 @@
 
     </div>
 
-    <!-- SIDE DRAWER: USER PROFILE, WALLET & INVENTORY -->
+    <!-- SIDE DRAWER: USER PROFILE & INVENTORY -->
     <div class="drawer-overlay" id="userDrawer" onclick="if(event.target === this) toggleDrawer(false)">
         <div class="drawer-panel">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -437,7 +456,7 @@
         </div>
     </div>
 
-    <!-- LIST USERNAME MODAL (Gated by Wallet & 1% Fee Notice) -->
+    <!-- LIST USERNAME MODAL -->
     <div class="modal-overlay" id="listingModal">
         <div class="modal-box">
             <h3 style="margin-top: 0; font-size: 16px;">List Username</h3>
@@ -478,7 +497,7 @@
         </div>
     </div>
 
-    <!-- ADMIN PANEL MODAL -->
+    <!-- ADMIN MODAL -->
     <div class="modal-overlay" id="adminModal">
         <div class="modal-box">
             <h3 style="margin-top: 0; font-size: 16px;">Admin Portal: Add Trusted Middleman</h3>
@@ -506,27 +525,21 @@
         let isSignUp = false;
         let activeMarketFilter = 'All';
 
-        // Initialize TON Connect UI SDK (Connects to real wallets like Tonkeeper, Telegram Wallet)
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://fexzoi.github.io/gates-network/tonconnect-manifest.json',
             buttonRootId: 'ton-connect-btn'
         });
 
-        // Dynamic State Lists
-        let usernamesData = [
-            { id: 1, category: 'Telegram', handle: '@crypto', owner: '@feust', price: '150', currency: 'TON', sellerContact: '@feust' },
-            { id: 2, category: 'Instagram', handle: '@network', owner: '@adminxeno', price: '500', currency: 'USDT', sellerContact: '@adminxeno' }
-        ];
-
+        // Clean lists by default as requested
+        let usernamesData = [];
         let userInventory = [];
-        let middlemenData = []; // Empty by default as requested
+        let middlemenData = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             renderUsernames();
             renderMiddlemen();
             renderInventory();
 
-            // Listen to real wallet connection state changes
             tonConnectUI.onStatusChange(wallet => {
                 if (wallet) {
                     document.getElementById('drawerWalletStatus').innerText = 'Connected (' + wallet.account.address.slice(0, 6) + '...)';
@@ -583,7 +596,6 @@
             renderUsernames();
         }
 
-        /* Gated Listing Flow */
         function openListingModal() {
             if (!tonConnectUI.connected) {
                 alert('Action restricted: Please connect your real Telegram wallet using the connect button before listing a username.');
@@ -620,7 +632,6 @@
             alert('Username successfully published to escrow marketplace.');
         }
 
-        /* Escrow Buy & Real Transaction Processing */
         async function buyItem(id) {
             const item = usernamesData.find(x => x.id === id);
             if (!item) return;
@@ -638,14 +649,12 @@
                 alert(`Telegram escrow executed successfully. 1% platform fee routed to admin wallet. Handle ${item.handle} transferred to your inventory.`);
             }
 
-            // Transfer ownership to user inventory
             userInventory.push(item);
             usernamesData = usernamesData.filter(x => x.id !== id);
             renderUsernames();
             renderInventory();
         }
 
-        /* Admin Controls */
         function openAdminAuth() {
             const pass = prompt('Enter Admin Passkey:');
             if (pass === 'xeno123' || pass === 'admin') {
