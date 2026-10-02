@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gates Network</title>
+    <title>Gates Network Dashboard</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #000000;
-            --surface-color: #0a0a0a;
-            --surface-card: #121212;
-            --border-color: #222222;
-            --border-light: #333333;
+            --bg-color: #050508;
+            --surface-color: #0b0f19;
+            --surface-card: #111827;
+            --border-color: #1f2937;
+            --border-glow: #6366f1;
             --text-main: #ffffff;
-            --text-muted: #888888;
+            --text-muted: #9ca3af;
+            --accent-purple: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.25);
+            --success: #10b981;
         }
 
         body {
@@ -24,16 +27,13 @@
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
         }
 
-        /* Desktop vs Mobile Responsive Wrapper */
         .app-wrapper {
             width: 100%;
-            max-width: 460px;
-            min-height: 100vh;
+            max-width: 900px;
             background: var(--bg-color);
             padding: 20px;
             box-sizing: border-box;
@@ -41,342 +41,346 @@
             flex-direction: column;
         }
 
-        @media (min-width: 768px) {
-            .app-wrapper {
-                max-width: 750px;
-                border: 1px solid var(--border-color);
-                border-radius: 20px;
-                min-height: 85vh;
-                margin: 20px;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-                background: var(--surface-color);
-            }
-        }
-
         .view { display: none; }
         .view.active { display: flex; flex-direction: column; flex: 1; }
 
-        /* Card Elements */
-        .card {
-            background: var(--surface-card);
+        /* Top Navigation Header Bar */
+        .top-navbar {
+            background: var(--surface-color);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 14px;
-        }
-
-        h1, h2, h3 { margin-top: 0; font-weight: 700; letter-spacing: -0.5px; }
-
-        .brand-title {
-            text-align: center;
-            font-size: 26px;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-        .brand-subtitle {
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-bottom: 24px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* Forms */
-        .form-group { margin-bottom: 14px; }
-        .form-group label {
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-        .input-field {
-            width: 100%;
-            background: #000000;
-            border: 1px solid var(--border-color);
-            color: #ffffff;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-field:focus { border-color: #ffffff; }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin: 14px 0;
-            cursor: pointer;
-        }
-
-        /* Buttons */
-        .btn {
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn:hover { opacity: 0.9; }
-        
-        .btn-outline {
-            background: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border-light);
-        }
-        .btn-outline:hover { border-color: #ffffff; }
-
-        /* Dashboard Header */
-        .dash-header {
+            border-radius: 16px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 14px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        .wallet-pill {
-            background: #000000;
-            border: 1px solid var(--border-light);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
+
+        .brand-logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 18px;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .nav-center-tabs {
+            display: flex;
+            background: #030712;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            border-radius: 12px;
+            gap: 4px;
+        }
+
+        .nav-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-
-        /* Service Top Navigation Tabs */
-        .services-nav {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .service-tab-btn {
-            background: #000000;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            text-align: center;
             transition: all 0.2s;
         }
-        .service-tab-btn.active {
-            background: #ffffff;
-            color: #000000;
-            border-color: #ffffff;
+
+        .nav-tab-btn.active {
+            background: var(--surface-card);
+            color: #fff;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
+
+        .nav-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-pill {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .dot-green { width: 7px; height: 7px; background: var(--success); border-radius: 50%; box-shadow: 0 0 6px var(--success); }
+
+        /* Hero Banner Card */
+        .hero-banner {
+            background: linear-gradient(135deg, #0b0f19 0%, #171c28 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-banner::after {
+            content: ''; position: absolute; right: -30px; bottom: -30px; width: 150px; height: 150px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
+        }
+
+        /* General Card Containers */
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+        .input-field, select.input-field {
+            width: 100%; background: #030712; border: 1px solid var(--border-color); color: #fff;
+            padding: 12px; border-radius: 10px; font-size: 14px; box-sizing: border-box; outline: none;
+        }
+        .input-field:focus { border-color: var(--accent-purple); box-shadow: 0 0 8px var(--accent-glow); }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff; border: none; width: 100%; padding: 12px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: all 0.2s;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent; color: var(--text-main); border: 1px solid var(--border-color); box-shadow: none;
+        }
+        .btn-outline:hover { border-color: var(--accent-purple); }
+
+        /* Marketplace Username Cards */
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .username-item {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+        .username-item:hover { border-color: var(--accent-purple); }
+        .username-info h4 { margin: 0 0 4px 0; font-size: 16px; color: #fff; }
+        .username-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        
+        .price-buy-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .price-badge { background: rgba(139, 92, 246, 0.1); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .buy-btn { background: #fff; color: #000; border: none; padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .buy-btn:hover { background: #e5e7eb; }
 
         .service-panel { display: none; }
         .service-panel.active { display: block; }
 
-        /* Fragment Items & Empty states */
-        .fragment-item {
-            background: #000000;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .fragment-info h4 { margin: 0 0 2px 0; font-size: 14px; }
-        .fragment-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
-        .fragment-price {
-            background: #ffffff;
-            color: #000000;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 800;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 30px 10px;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-style: italic;
-        }
-
-        /* Middlemen Rows */
-        .mm-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000000;
-            border: 1px solid var(--border-color);
-            padding: 12px 14px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-        }
-        .mm-row b { font-size: 13px; }
-        .mm-row span { font-size: 11px; color: var(--text-muted); }
-        .verified-tag { font-size: 9px; letter-spacing: 1px; font-weight: bold; border: 1px solid var(--border-light); padding: 3px 6px; border-radius: 4px; }
-
-        .switch-auth {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 16px;
-        }
-        .switch-auth a { color: #ffffff; text-decoration: underline; cursor: pointer; }
-
-        /* Wallet Connection Modal Backdrop */
+        /* Modal Overlay for Checkout & Wallet */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box;
         }
         .modal-box {
-            background: var(--surface-card);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 24px;
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
+            background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
+
+        .step-indicator { font-size: 11px; text-transform: uppercase; color: var(--accent-purple); font-weight: 700; margin-bottom: 6px; }
     </style>
 </head>
 <body>
 
     <div class="app-wrapper">
 
-        <!-- ================= VIEW 1: AUTHENTICATION ================= -->
+        <!-- ================= VIEW 1: AUTHENTICATION (Sign In / Sign Up) ================= -->
         <div class="view active" id="authView">
-            <div class="card" style="margin: auto 0; border: none; background: transparent;">
-                <h1 class="brand-title">Gates</h1>
-                <div class="brand-subtitle" id="authSubTitle">Sign In to Network</div>
-
-                <div class="form-group">
-                    <label>Telegram ID / Email</label>
-                    <input type="text" id="authIdentifier" class="input-field" placeholder="Enter handle or email">
+            <div class="card" style="max-width: 400px; margin: auto; border-color: var(--border-color);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div class="logo-box" style="margin: 0 auto 12px auto; width: 48px; height: 48px; font-size: 24px;">G</div>
+                    <h1 style="margin:0; font-size: 22px;">GATES NETWORK</h1>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;" id="authSubTitle">Secure Decentralized Access</p>
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
+                    <label>Telegram / Email Identifier</label>
+                    <input type="text" id="authIdentifier" class="input-field" placeholder="@username or email">
+                </div>
+
+                <div class="form-group">
+                    <label>Security Password</label>
                     <input type="password" id="authPassword" class="input-field" placeholder="••••••••">
                 </div>
 
-                <label class="checkbox-label">
-                    <input type="checkbox" id="rememberMeCheckbox"> Remember me on this device
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin: 14px 0; cursor: pointer;">
+                    <input type="checkbox" id="rememberMeCheckbox"> Remember session on this device
                 </label>
 
-                <button class="btn" id="authSubmitBtn" onclick="handleAuthSubmit()" style="margin-top: 10px;">Sign In</button>
+                <button class="btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Sign In</button>
 
-                <div class="switch-auth">
-                    <span id="authToggleText">Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a></span>
+                <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 16px;">
+                    <span id="authToggleText">Don't have an account? <a onclick="toggleAuthMode()" style="color: #fff; text-decoration: underline; cursor: pointer;">Sign Up</a></span>
                 </div>
             </div>
         </div>
 
-        <!-- ================= VIEW 2: MAIN DASHBOARD ================= -->
+        <!-- ================= VIEW 2: PROFESSIONAL DASHBOARD ================= -->
         <div class="view" id="mainDashboardView">
             
-            <!-- Dashboard Header -->
-            <div class="dash-header">
-                <div>
-                    <h2 style="margin:0; font-size:16px; letter-spacing: 1px;">GATES NETWORK</h2>
-                    <span style="font-size:10px; color:var(--text-muted);" id="userSessionDisplay">Session Active</span>
-                </div>
-                <div class="wallet-pill" onclick="openWalletModal()" id="walletStatusText">
-                    <span>🔌</span> Connect Wallet
-                </div>
-            </div>
-
-            <!-- Profile Node Card -->
-            <div class="card" style="padding: 14px 18px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- Top Navbar matching professional UI -->
+            <div class="top-navbar">
+                <div class="brand-logo-area">
+                    <div class="logo-box">G</div>
                     <div>
-                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Profile Node</div>
-                        <div style="font-size: 13px; font-weight: 600; margin-top: 2px;" id="profileHandleDisplay">@user</div>
+                        <div style="font-weight: 800; font-size: 14px; letter-spacing: 0.5px;">GATES NETWORK</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">Decentralized Ecosystem</div>
                     </div>
-                    <button class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 10px;" onclick="handleLogout()">Sign Out</button>
+                </div>
+
+                <div class="nav-center-tabs">
+                    <button class="nav-tab-btn active" onclick="switchService('usernamesPanel', this)">🏷️ Usernames</button>
+                    <button class="nav-tab-btn" onclick="switchService('middlemenPanel', this)">🛡️ Middlemen</button>
+                </div>
+
+                <div class="nav-right-actions">
+                    <div class="status-pill" onclick="openWalletModal()" id="walletStatusPill">
+                        <span class="dot-green"></span> <span id="walletpillText">Connect Wallet</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- SERVICES TOP BUTTONS -->
-            <div class="services-nav">
-                <div class="service-tab-btn active" onclick="switchService('usernamesPanel', this)">Usernames</div>
-                <div class="service-tab-btn" onclick="switchService('middlemenPanel', this)">Middlemen</div>
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <div>
+                    <h2 style="margin: 0 0 6px 0; font-size: 20px;" id="welcomeBannerTitle">Welcome Back</h2>
+                    <p style="margin: 0; font-size: 12px; color: var(--text-muted);" id="userSessionDisplay">Active Session Node</p>
+                </div>
+                <button class="btn btn-outline" style="width: auto; padding: 8px 16px; font-size: 11px;" onclick="handleLogout()">Sign Out</button>
             </div>
 
-            <!-- SERVICE PANEL 1: USERNAMES -->
+            <!-- TAB 1: USERNAMES MARKETPLACE -->
             <div class="service-panel active" id="usernamesPanel">
-                <div class="card" style="min-height: 200px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin:0;">Fragment Listings</h3>
-                        <button class="btn" style="width: auto; padding: 4px 10px; font-size: 10px; display: none;" id="adminAddUsernameBtn" onclick="adminListUsername()">+ Admin Add</button>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px;">Fragment Username Directory</h3>
+                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Securely buy or list custom Telegram identifiers.</p>
+                        </div>
+                        <button class="btn" style="width: auto; padding: 10px 18px; font-size: 12px;" onclick="openListingModal()">+ List Username</button>
                     </div>
-                    
-                    <div id="usernameMarketplaceList">
-                        <!-- Dynamically populated or empty state -->
+
+                    <div class="market-grid" id="usernameMarketplaceList">
+                        <!-- Loaded dynamically -->
                     </div>
                 </div>
             </div>
 
-            <!-- SERVICE PANEL 2: MIDDLEMEN -->
+            <!-- TAB 2: TRUSTED MIDDLEMEN DIRECTORY -->
             <div class="service-panel" id="middlemenPanel">
-                <div class="card" style="min-height: 200px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin:0;">Verified Brokers</h3>
-                        <button class="btn" style="width: auto; padding: 4px 10px; font-size: 10px; display: none;" id="adminAddMmBtn" onclick="adminAddMiddleman()">+ Admin Add</button>
-                    </div>
+                <div class="card">
+                    <h3 style="margin: 0 0 4px 0; font-size: 16px;">Trusted Escrow Brokers</h3>
+                    <p style="margin: 0 0 16px 0; font-size: 12px; color: var(--text-muted);">Verified middleman network for secure high-value trades.</p>
 
                     <div id="middlemenListContainer">
-                        <!-- Dynamically populated or empty state -->
+                        <!-- Loaded dynamically -->
                     </div>
                 </div>
-            </div>
-
-            <!-- Admin Toggle Trigger (Bottom subtle button for you to manage lists) -->
-            <div style="text-align: center; margin-top: auto; padding-top: 10px;">
-                <span style="font-size: 10px; color: var(--text-muted); cursor: pointer; text-decoration: underline;" onclick="toggleAdminMode()">Admin Mode: <span id="adminStatusText">OFF</span></span>
             </div>
 
         </div>
 
     </div>
 
-    <!-- WALLET CONNECTION MODAL PROCESS -->
+    <!-- PROFESSIONAL CHECKOUT / BUY MODAL PROCESS -->
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-box">
+            <div class="step-indicator" id="checkoutStepLabel">Step 1 of 3: Order Summary</div>
+            <h3 style="margin-top: 0; font-size: 18px;" id="checkoutTitle">Secure Purchase</h3>
+            
+            <div id="checkoutModalContent" style="margin: 16px 0; font-size: 13px; color: var(--text-muted);">
+                <!-- Dynamic content steps -->
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" id="checkoutNextBtn" onclick="proceedCheckoutStep()">Continue to Wallet</button>
+                <button class="btn btn-outline" onclick="closeCheckoutModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WALLET CONNECTION MODAL -->
     <div class="modal-overlay" id="walletModal">
         <div class="modal-box">
-            <h3 style="font-size: 16px; margin-bottom: 8px;">Connect Telegram Wallet</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Link your official TON Wallet or Fragment identifier for decentralized asset transfers.</p>
+            <h3 style="margin-top:0; font-size: 18px;">Connect Telegram Wallet</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Link your official TON Wallet or Fragment identity provider.</p>
             
-            <button class="btn" style="margin-bottom: 10px;" onclick="executeWalletHandshake('TON Wallet (App)')">Connect TON Wallet</button>
-            <button class="btn btn-outline" style="margin-bottom: 16px;" onclick="executeWalletHandshake('Telegram Fragment ID')">Connect via Fragment</button>
-            <button class="btn btn-outline" style="border-color: #444; color: #888; padding: 10px;" onclick="closeWalletModal()">Cancel</button>
+            <button class="btn" style="margin-bottom: 10px;" onclick="connectWalletProvider('TON Wallet App')">Connect TON Space</button>
+            <button class="btn btn-outline" style="margin-bottom: 16px;" onclick="connectWalletProvider('Telegram Fragment')">Connect via Fragment</button>
+            <button class="btn btn-outline" style="border-color: #333; color: var(--text-muted);" onclick="closeWalletModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- LIST USERNAME MODAL -->
+    <div class="modal-overlay" id="listingModal">
+        <div class="modal-box">
+            <h3 style="margin-top:0; font-size: 18px;">List Username for Sale</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Set your price and choose your payment currency.</p>
+            
+            <div class="form-group">
+                <label>Telegram Handle</label>
+                <input type="text" id="newHandleInput" class="input-field" placeholder="@myhandle">
+            </div>
+            <div class="form-group">
+                <label>Currency Option</label>
+                <select id="newCurrencySelect" class="input-field">
+                    <option value="TON">TON</option>
+                    <option value="USDT">USDT</option>
+                    <option value="STARS">Telegram Stars ⭐</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="CRYPTO">Other Crypto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Listing Price</label>
+                <input type="number" id="newPriceInput" class="input-field" placeholder="100">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 16px;">
+                <button class="btn" onclick="submitNewListing()">Publish Listing</button>
+                <button class="btn btn-outline" onclick="closeListingModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -386,20 +390,31 @@
         tg.expand();
 
         let isSignUp = false;
-        let isAdminActive = false;
 
-        // In-Memory storage arrays (Empty by default as requested if no items are added)
-        let usernamesData = [];
-        let middlemenData = [];
+        // Default Data Lists (Usernames & Middlemen)
+        let usernamesData = [
+            { id: 1, handle: '@crypto', owner: '@feust', price: '150', currency: 'TON' },
+            { id: 2, handle: '@gateway', owner: '@admin', price: '500', currency: 'STARS' },
+            { id: 3, handle: '@xeno', owner: '@teamxeno', price: '12,000', currency: 'INR' }
+        ];
 
-        // On Load Check Persistent Session
+        let middlemenData = [
+            { name: 'Team Xeno Escrow', info: 'Main Protocol Mediator', tag: 'VERIFIED' },
+            { name: 'Feust (Admin)', info: 'Telegram: @feust', tag: 'VERIFIED' },
+            { name: 'Gates Support Desk', info: 'officalteamxeno1@gmail.com', tag: 'OFFICIAL' }
+        ];
+
+        // Active checkout transaction state
+        let currentCheckoutItem = null;
+        let checkoutStep = 1;
+
         window.addEventListener('DOMContentLoaded', () => {
             renderUsernames();
             renderMiddlemen();
 
-            const rememberedUser = localStorage.getItem('gates_user_session');
-            if (rememberedUser) {
-                appLoginSuccess(rememberedUser);
+            const savedUser = localStorage.getItem('gates_user_session');
+            if (savedUser) {
+                appLoginSuccess(savedUser);
             } else if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.username) {
                 document.getElementById('authIdentifier').value = '@' + tg.initDataUnsafe.user.username;
             }
@@ -407,11 +422,11 @@
 
         function toggleAuthMode() {
             isSignUp = !isSignUp;
-            document.getElementById('authSubTitle').innerText = isSignUp ? "Create Network Account" : "Sign In to Network";
+            document.getElementById('authSubTitle').innerText = isSignUp ? "Create Decentralized Profile" : "Secure Decentralized Access";
             document.getElementById('authSubmitBtn').innerText = isSignUp ? "Sign Up" : "Sign In";
             document.getElementById('authToggleText').innerHTML = isSignUp 
-                ? `Already have an account? <a onclick="toggleAuthMode()">Sign In</a>` 
-                : `Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a>`;
+                ? `Already have an account? <a onclick="toggleAuthMode()" style="color:#fff; text-decoration:underline; cursor:pointer;">Sign In</a>` 
+                : `Don't have an account? <a onclick="toggleAuthMode()" style="color:#fff; text-decoration:underline; cursor:pointer;">Sign Up</a>`;
         }
 
         function handleAuthSubmit() {
@@ -420,15 +435,12 @@
             const rememberMe = document.getElementById('rememberMeCheckbox').checked;
 
             if (!identifier || !password) {
-                tg.showAlert("Please enter both ID and password.");
+                tg.showAlert("Please fill in all security details.");
                 return;
             }
 
-            if (rememberMe) {
-                localStorage.setItem('gates_user_session', identifier);
-            } else {
-                localStorage.removeItem('gates_user_session');
-            }
+            if (rememberMe) localStorage.setItem('gates_user_session', identifier);
+            else localStorage.removeItem('gates_user_session');
 
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             appLoginSuccess(identifier);
@@ -437,10 +449,10 @@
         function appLoginSuccess(username) {
             document.getElementById('authView').classList.remove('active');
             document.getElementById('mainDashboardView').classList.add('active');
-            
+
             const cleanName = username.startsWith('@') ? username : '@' + username;
-            document.getElementById('userSessionDisplay').innerText = `Active Session: ${cleanName}`;
-            document.getElementById('profileHandleDisplay').innerText = cleanName;
+            document.getElementById('welcomeBannerTitle').innerText = `Welcome, ${cleanName}`;
+            document.getElementById('userSessionDisplay').innerText = `Active Node Session: ${cleanName} • Securely Authenticated`;
         }
 
         function handleLogout() {
@@ -448,124 +460,169 @@
             document.getElementById('mainDashboardView').classList.remove('active');
             document.getElementById('authView').classList.add('active');
             document.getElementById('authPassword').value = '';
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // Service Tab Switching
-        function switchService(panelId, btnElement) {
+        // Tab Navigation
+        function switchService(panelId, btnEl) {
             document.querySelectorAll('.service-panel').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.service-tab-btn').forEach(el => el.classList.remove('active'));
-            
+            document.querySelectorAll('.nav-tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(panelId).classList.add('active');
-            btnElement.classList.add('active');
+            btnEl.classList.add('active');
         }
 
-        // Wallet Handshake Modal Process
-        function openWalletModal() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            document.getElementById('walletModal').style.display = 'flex';
-        }
-        function closeWalletModal() {
-            document.getElementById('walletModal').style.display = 'none';
-        }
-        function executeWalletHandshake(walletType) {
-            closeWalletModal();
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            
-            const pill = document.getElementById('walletStatusText');
-            pill.innerHTML = `<span>🟢</span> Connected`;
-            pill.style.borderColor = "#ffffff";
-            tg.showAlert(`${walletType} linked successfully via secure cryptographic handshake.`);
-        }
-
-        // Render Usernames with Empty State handling
+        // Render Usernames
         function renderUsernames() {
             const container = document.getElementById('usernameMarketplaceList');
             if (usernamesData.length === 0) {
-                container.innerHTML = `<div class="empty-state">No usernames currently listed.</div>`;
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 30px;">No usernames currently listed on the marketplace.</div>`;
                 return;
             }
             container.innerHTML = '';
             usernamesData.forEach(item => {
                 const el = document.createElement('div');
-                el.className = 'fragment-item';
+                el.className = 'username-item';
                 el.innerHTML = `
-                    <div class="fragment-info">
+                    <div class="username-info">
                         <h4>${item.handle}</h4>
                         <p>Owner: ${item.owner}</p>
                     </div>
-                    <div class="fragment-price">${item.price} ${item.currency}</div>
+                    <div class="price-buy-wrap">
+                        <div class="price-badge">${item.price} ${item.currency}</div>
+                        <button class="buy-btn" onclick="initiatePurchase(${item.id})">Buy Now</button>
+                    </div>
                 `;
                 container.appendChild(el);
             });
         }
 
-        // Render Middlemen with Empty State handling
+        // Render Middlemen
         function renderMiddlemen() {
             const container = document.getElementById('middlemenListContainer');
             if (middlemenData.length === 0) {
-                container.innerHTML = `<div class="empty-state">No middlemen available.</div>`;
+                container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px;">No middlemen available.</div>`;
                 return;
             }
             container.innerHTML = '';
             middlemenData.forEach(item => {
                 const el = document.createElement('div');
-                el.className = 'mm-row';
+                el.className = 'username-item';
+                el.style.marginBottom = '10px';
                 el.innerHTML = `
                     <div>
-                        <b>${item.name}</b><br>
-                        <span>${item.info}</span>
+                        <h4 style="margin:0 0 4px 0; font-size:15px;">${item.name}</h4>
+                        <p style="margin:0; font-size:12px; color:var(--text-muted);">${item.info}</p>
                     </div>
-                    <div class="verified-tag">${item.tag}</div>
+                    <div style="font-size:10px; font-weight:bold; border:1px solid var(--border-color); padding:4px 8px; border-radius:6px; color: var(--success);">${item.tag}</div>
                 `;
                 container.appendChild(el);
             });
         }
 
-        // Admin Mode Toggle (So only you can add items)
-        function toggleAdminMode() {
-            const adminPass = prompt("Enter Admin Passkey:");
-            if (adminPass === "xeno123" || adminPass === "admin") {
-                isAdminActive = !isAdminActive;
-                document.getElementById('adminStatusText').innerText = isAdminActive ? "ON" : "OFF";
-                document.getElementById('adminAddUsernameBtn').style.display = isAdminActive ? "block" : "none";
-                document.getElementById('adminAddMmBtn').style.display = isAdminActive ? "block" : "none";
-                tg.showAlert(isAdminActive ? "Admin Mode Enabled. You can now add listings." : "Admin Mode Disabled.");
-            } else if (adminPass) {
-                tg.showAlert("Incorrect admin passkey.");
+        // PROFESSIONAL BUY PROCESS WORKFLOW (Multi-step modal)
+        function initiatePurchase(id) {
+            currentCheckoutItem = usernamesData.find(x => x.id === id);
+            if (!currentCheckoutItem) return;
+            checkoutStep = 1;
+            updateCheckoutModalUI();
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+
+        function updateCheckoutModalUI() {
+            const content = document.getElementById('checkoutModalContent');
+            const label = document.getElementById('checkoutStepLabel');
+            const nextBtn = document.getElementById('checkoutNextBtn');
+
+            if (checkoutStep === 1) {
+                label.innerText = "Step 1 of 3: Order Summary";
+                document.getElementById('checkoutTitle').innerText = `Acquire ${currentCheckoutItem.handle}`;
+                content.innerHTML = `
+                    <p style="margin:0 0 10px 0; color:#fff;"><b>Item:</b> Telegram Handle ${currentCheckoutItem.handle}</p>
+                    <p style="margin:0 0 10px 0; color:#fff;"><b>Current Owner:</b> ${currentCheckoutItem.owner}</p>
+                    <p style="margin:0 0 10px 0; color:#fff;"><b>Total Price:</b> <span style="color:var(--accent-purple); font-size:16px; font-weight:bold;">${currentCheckoutItem.price} ${currentCheckoutItem.currency}</span></p>
+                    <p style="font-size:11px; color:var(--text-muted);">Escrow protocol protects buyer and seller automatically via Gates Network.</p>
+                `;
+                nextBtn.innerText = "Proceed to Wallet Check";
+            } else if (checkoutStep === 2) {
+                label.innerText = "Step 2 of 3: Wallet Authorization";
+                document.getElementById('checkoutTitle').innerText = "Cryptographic Handshake";
+                content.innerHTML = `
+                    <p style="margin:0 0 10px 0;">Connecting to active Telegram Wallet session...</p>
+                    <div style="background:#030712; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-family:monospace; font-size:12px; color:#10b981;">
+                        [OK] Wallet Verified<br>[OK] Balance sufficient for ${currentCheckoutItem.price} ${currentCheckoutItem.currency}
+                    </div>
+                `;
+                nextBtn.innerText = "Authorize Escrow Transfer";
+            } else if (checkoutStep === 3) {
+                label.innerText = "Step 3 of 3: Transfer Complete";
+                document.getElementById('checkoutTitle').innerText = "Ownership Transferred";
+                content.innerHTML = `
+                    <div style="text-align:center; padding: 10px 0;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🎉</div>
+                        <p style="color:#fff; font-weight:bold; font-size:15px; margin:0 0 6px 0;">Successfully Acquired ${currentCheckoutItem.handle}!</p>
+                        <p style="font-size:12px; color:var(--text-muted); margin:0;">Handle ownership has been securely assigned to your Telegram account profile.</p>
+                    </div>
+                `;
+                nextBtn.innerText = "Finish & Close";
             }
         }
 
-        // Admin Functions to Add Listings
-        function adminListUsername() {
-            const handle = prompt("Enter username handle (e.g. @gateway):");
-            if (!handle) return;
-            const currency = prompt("Enter currency (INR, USDT, TON, CRYPTO, STARS):");
-            if (!currency) return;
-            const price = prompt("Enter price amount:");
-            if (!price) return;
-            const owner = prompt("Enter owner handle (e.g. @feust):") || "@admin";
-
-            usernamesData.push({
-                handle: handle.startsWith('@') ? handle : '@' + handle,
-                owner: owner,
-                price: price,
-                currency: currency.toUpperCase()
-            });
-            renderUsernames();
-            tg.showAlert("Username listed successfully!");
+        function proceedCheckoutStep() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            if (checkoutStep < 3) {
+                checkoutStep++;
+                updateCheckoutModalUI();
+            } else {
+                // Remove item from marketplace upon successful completion
+                usernamesData = usernamesData.filter(x => x.id !== currentCheckoutItem.id);
+                renderUsernames();
+                closeCheckoutModal();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                tg.showAlert("Purchase completed successfully! Handle transferred.");
+            }
         }
 
-        function adminAddMiddleman() {
-            const name = prompt("Enter Middleman / Broker Name:");
-            if (!name) return;
-            const info = prompt("Enter details (Contact info / email):");
-            if (!info) return;
-            const tag = prompt("Enter tag badge (VERIFIED / OFFICIAL):") || "VERIFIED";
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').style.display = 'none';
+        }
 
-            middlemenData.push({ name, info, tag: tag.toUpperCase() });
-            renderMiddlemen();
-            tg.showAlert("Middleman added successfully!");
+        // Wallet Handshake Modal
+        function openWalletModal() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('walletModal').style.display = 'flex';
+        }
+        function closeWalletModal() { document.getElementById('walletModal').style.display = 'none'; }
+        function connectWalletProvider(name) {
+            closeWalletModal();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            document.getElementById('walletpillText').innerText = "Connected";
+            tg.showAlert(`${name} connected successfully.`);
+        }
+
+        // Username Listing Modal
+        function openListingModal() { document.getElementById('listingModal').style.display = 'flex'; }
+        function closeListingModal() { document.getElementById('listingModal').style.display = 'none'; }
+        function submitNewListing() {
+            const handle = document.getElementById('newHandleInput').value.trim();
+            const currency = document.getElementById('newCurrencySelect').value;
+            const price = document.getElementById('newPriceInput').value.trim();
+
+            if (!handle || !price) {
+                tg.showAlert("Please complete all listing fields.");
+                return;
+            }
+
+            usernamesData.push({
+                id: Date.now(),
+                handle: handle.startsWith('@') ? handle : '@' + handle,
+                owner: 'You (Connected Node)',
+                price: price,
+                currency: currency
+            });
+
+            renderUsernames();
+            closeListingModal();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            tg.showAlert("Your username was successfully listed on the marketplace!");
         }
     </script>
 </body>
