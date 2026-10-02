@@ -8,12 +8,12 @@
     <style>
         :root {
             --bg-color: #000000;
-            --surface-color: #0f0f0f;
-            --border-color: #262626;
+            --surface-color: #0a0a0a;
+            --surface-card: #121212;
+            --border-color: #222222;
+            --border-light: #333333;
             --text-main: #ffffff;
             --text-muted: #888888;
-            --accent: #ffffff;
-            --accent-inverse: #000000;
         }
 
         body {
@@ -21,64 +21,75 @@
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 16px;
+            padding: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
         }
 
-        .container {
+        /* Desktop vs Mobile Responsive Wrapper */
+        .app-wrapper {
             width: 100%;
-            max-width: 420px;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        /* Views management */
-        .view { display: none; }
-        .view.active { display: block; }
-
-        /* Premium Minimalist Card Styling */
-        .card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            max-width: 460px;
+            min-height: 100vh;
+            background: var(--bg-color);
             padding: 20px;
-            margin-bottom: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
-        h1, h2, h3 {
-            margin-top: 0;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+        @media (min-width: 768px) {
+            .app-wrapper {
+                max-width: 750px;
+                border: 1px solid var(--border-color);
+                border-radius: 20px;
+                min-height: 85vh;
+                margin: 20px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+                background: var(--surface-color);
+            }
         }
+
+        .view { display: none; }
+        .view.active { display: flex; flex-direction: column; flex: 1; }
+
+        /* Card Elements */
+        .card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        h1, h2, h3 { margin-top: 0; font-weight: 700; letter-spacing: -0.5px; }
 
         .brand-title {
             text-align: center;
-            font-size: 24px;
+            font-size: 26px;
             margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
         .brand-subtitle {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
             margin-bottom: 24px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
         /* Forms */
-        .form-group {
-            margin-bottom: 14px;
-        }
+        .form-group { margin-bottom: 14px; }
         .form-group label {
             display: block;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             color: var(--text-muted);
             margin-bottom: 6px;
         }
@@ -94,9 +105,7 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        .input-field:focus {
-            border-color: #ffffff;
-        }
+        .input-field:focus { border-color: #ffffff; }
 
         .checkbox-label {
             display: flex;
@@ -108,15 +117,15 @@
             cursor: pointer;
         }
 
-        /* Monochrome Buttons */
+        /* Buttons */
         .btn {
-            background: var(--accent);
-            color: var(--accent-inverse);
+            background: #ffffff;
+            color: #000000;
             border: none;
             width: 100%;
             padding: 14px;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -128,32 +137,63 @@
         .btn-outline {
             background: transparent;
             color: var(--text-main);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-light);
         }
-        .btn-outline:hover {
-            border-color: #ffffff;
-        }
+        .btn-outline:hover { border-color: #ffffff; }
 
-        /* Dashboard Header Layout */
+        /* Dashboard Header */
         .dash-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 14px;
         }
         .wallet-pill {
             background: #000000;
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
+            border: 1px solid var(--border-light);
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* Fragment Style Usernames */
+        /* Service Top Navigation Tabs */
+        .services-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .service-tab-btn {
+            background: #000000;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .service-tab-btn.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        .service-panel { display: none; }
+        .service-panel.active { display: block; }
+
+        /* Fragment Items & Empty states */
         .fragment-item {
             background: #000000;
             border: 1px solid var(--border-color);
@@ -164,18 +204,25 @@
             align-items: center;
             margin-bottom: 10px;
         }
-        .fragment-info h4 { margin: 0 0 2px 0; font-size: 15px; }
+        .fragment-info h4 { margin: 0 0 2px 0; font-size: 14px; }
         .fragment-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
         .fragment-price {
             background: #ffffff;
             color: #000000;
             padding: 6px 10px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 800;
         }
+        .empty-state {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
 
-        /* Middleman list */
+        /* Middlemen Rows */
         .mm-row {
             display: flex;
             justify-content: space-between;
@@ -188,7 +235,7 @@
         }
         .mm-row b { font-size: 13px; }
         .mm-row span { font-size: 11px; color: var(--text-muted); }
-        .verified-tag { font-size: 10px; letter-spacing: 1px; font-weight: bold; border: 1px solid var(--border-color); padding: 3px 6px; border-radius: 4px; }
+        .verified-tag { font-size: 9px; letter-spacing: 1px; font-weight: bold; border: 1px solid var(--border-light); padding: 3px 6px; border-radius: 4px; }
 
         .switch-auth {
             text-align: center;
@@ -198,19 +245,36 @@
         }
         .switch-auth a { color: #ffffff; text-decoration: underline; cursor: pointer; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Wallet Connection Modal Backdrop */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-box {
+            background: var(--surface-card);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="app-wrapper">
 
-        <!-- ================= VIEW 1: AUTHENTICATION (Sign In / Sign Up) ================= -->
+        <!-- ================= VIEW 1: AUTHENTICATION ================= -->
         <div class="view active" id="authView">
-            <div class="card" style="margin-top: 40px;">
+            <div class="card" style="margin: auto 0; border: none; background: transparent;">
                 <h1 class="brand-title">Gates</h1>
                 <div class="brand-subtitle" id="authSubTitle">Sign In to Network</div>
 
@@ -242,89 +306,78 @@
             <!-- Dashboard Header -->
             <div class="dash-header">
                 <div>
-                    <h2 style="margin:0; font-size:18px;">GATES NETWORK</h2>
-                    <span style="font-size:11px; color:var(--text-muted);" id="userSessionDisplay">Session Active</span>
+                    <h2 style="margin:0; font-size:16px; letter-spacing: 1px;">GATES NETWORK</h2>
+                    <span style="font-size:10px; color:var(--text-muted);" id="userSessionDisplay">Session Active</span>
                 </div>
-                <div class="wallet-pill" onclick="connectTgWallet()" id="walletStatusText">
-                    Connect Wallet
+                <div class="wallet-pill" onclick="openWalletModal()" id="walletStatusText">
+                    <span>🔌</span> Connect Wallet
                 </div>
             </div>
 
-            <!-- Section 1: User Profile & Status Card -->
-            <div class="card">
-                <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px;">Profile Node</h3>
-                <p style="font-size: 14px; margin: 0 0 6px 0;" id="profileHandleDisplay"><b>Handle:</b> Loading...</p>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 14px 0;">Status: Securely Connected via Telegram WebApp</p>
-                <button class="btn btn-outline" style="padding: 10px; font-size: 12px;" onclick="handleLogout()">Sign Out</button>
+            <!-- Profile Node Card -->
+            <div class="card" style="padding: 14px 18px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Profile Node</div>
+                        <div style="font-size: 13px; font-weight: 600; margin-top: 2px;" id="profileHandleDisplay">@user</div>
+                    </div>
+                    <button class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 10px;" onclick="handleLogout()">Sign Out</button>
+                </div>
             </div>
 
-            <!-- Section 2: Fragment Username Marketplace -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin:0;">Usernames</h3>
-                    <button class="btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="listNewUsername()">+ List Handle</button>
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Fragment decentralized naming protocol marketplace.</p>
+            <!-- SERVICES TOP BUTTONS -->
+            <div class="services-nav">
+                <div class="service-tab-btn active" onclick="switchService('usernamesPanel', this)">Usernames</div>
+                <div class="service-tab-btn" onclick="switchService('middlemenPanel', this)">Middlemen</div>
+            </div>
 
-                <div id="usernameMarketplaceList">
-                    <!-- Listing 1 -->
-                    <div class="fragment-item">
-                        <div class="fragment-info">
-                            <h4>@crypto</h4>
-                            <p>Owner: @feust</p>
-                        </div>
-                        <div class="fragment-price">150 TON</div>
+            <!-- SERVICE PANEL 1: USERNAMES -->
+            <div class="service-panel active" id="usernamesPanel">
+                <div class="card" style="min-height: 200px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin:0;">Fragment Listings</h3>
+                        <button class="btn" style="width: auto; padding: 4px 10px; font-size: 10px; display: none;" id="adminAddUsernameBtn" onclick="adminListUsername()">+ Admin Add</button>
                     </div>
-                    <!-- Listing 2 -->
-                    <div class="fragment-item">
-                        <div class="fragment-info">
-                            <h4>@gateway</h4>
-                            <p>Owner: @admin</p>
-                        </div>
-                        <div class="fragment-price">500 STARS</div>
-                    </div>
-                    <!-- Listing 3 -->
-                    <div class="fragment-item">
-                        <div class="fragment-info">
-                            <h4>@xeno</h4>
-                            <p>Owner: @teamxeno</p>
-                        </div>
-                        <div class="fragment-price">₹12,000 INR</div>
+                    
+                    <div id="usernameMarketplaceList">
+                        <!-- Dynamically populated or empty state -->
                     </div>
                 </div>
             </div>
 
-            <!-- Section 3: Trusted Middlemen Directory -->
-            <div class="card">
-                <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px;">Trusted Middlemen</h3>
-                
-                <div class="mm-row">
-                    <div>
-                        <b>Team Xeno Escrow</b><br>
-                        <span>Main Protocol Mediator</span>
+            <!-- SERVICE PANEL 2: MIDDLEMEN -->
+            <div class="service-panel" id="middlemenPanel">
+                <div class="card" style="min-height: 200px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin:0;">Verified Brokers</h3>
+                        <button class="btn" style="width: auto; padding: 4px 10px; font-size: 10px; display: none;" id="adminAddMmBtn" onclick="adminAddMiddleman()">+ Admin Add</button>
                     </div>
-                    <div class="verified-tag">VERIFIED</div>
-                </div>
 
-                <div class="mm-row">
-                    <div>
-                        <b>Feust (Admin)</b><br>
-                        <span>TG: @feust</span>
+                    <div id="middlemenListContainer">
+                        <!-- Dynamically populated or empty state -->
                     </div>
-                    <div class="verified-tag">VERIFIED</div>
                 </div>
+            </div>
 
-                <div class="mm-row" style="margin-bottom: 0;">
-                    <div>
-                        <b>Support Desk</b><br>
-                        <span>officalteamxeno1@gmail.com</span>
-                    </div>
-                    <div class="verified-tag">OFFICIAL</div>
-                </div>
+            <!-- Admin Toggle Trigger (Bottom subtle button for you to manage lists) -->
+            <div style="text-align: center; margin-top: auto; padding-top: 10px;">
+                <span style="font-size: 10px; color: var(--text-muted); cursor: pointer; text-decoration: underline;" onclick="toggleAdminMode()">Admin Mode: <span id="adminStatusText">OFF</span></span>
             </div>
 
         </div>
 
+    </div>
+
+    <!-- WALLET CONNECTION MODAL PROCESS -->
+    <div class="modal-overlay" id="walletModal">
+        <div class="modal-box">
+            <h3 style="font-size: 16px; margin-bottom: 8px;">Connect Telegram Wallet</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Link your official TON Wallet or Fragment identifier for decentralized asset transfers.</p>
+            
+            <button class="btn" style="margin-bottom: 10px;" onclick="executeWalletHandshake('TON Wallet (App)')">Connect TON Wallet</button>
+            <button class="btn btn-outline" style="margin-bottom: 16px;" onclick="executeWalletHandshake('Telegram Fragment ID')">Connect via Fragment</button>
+            <button class="btn btn-outline" style="border-color: #444; color: #888; padding: 10px;" onclick="closeWalletModal()">Cancel</button>
+        </div>
     </div>
 
     <script>
@@ -333,9 +386,17 @@
         tg.expand();
 
         let isSignUp = false;
+        let isAdminActive = false;
 
-        // On Load Check Persistent Session ("Remember Me")
+        // In-Memory storage arrays (Empty by default as requested if no items are added)
+        let usernamesData = [];
+        let middlemenData = [];
+
+        // On Load Check Persistent Session
         window.addEventListener('DOMContentLoaded', () => {
+            renderUsernames();
+            renderMiddlemen();
+
             const rememberedUser = localStorage.getItem('gates_user_session');
             if (rememberedUser) {
                 appLoginSuccess(rememberedUser);
@@ -344,7 +405,6 @@
             }
         });
 
-        // Toggle Sign In / Sign Up Mode
         function toggleAuthMode() {
             isSignUp = !isSignUp;
             document.getElementById('authSubTitle').innerText = isSignUp ? "Create Network Account" : "Sign In to Network";
@@ -354,7 +414,6 @@
                 : `Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a>`;
         }
 
-        // Handle Authentication Form Submit
         function handleAuthSubmit() {
             const identifier = document.getElementById('authIdentifier').value.trim();
             const password = document.getElementById('authPassword').value.trim();
@@ -375,17 +434,15 @@
             appLoginSuccess(identifier);
         }
 
-        // Switch Screen to Main Dashboard
         function appLoginSuccess(username) {
             document.getElementById('authView').classList.remove('active');
             document.getElementById('mainDashboardView').classList.add('active');
             
             const cleanName = username.startsWith('@') ? username : '@' + username;
             document.getElementById('userSessionDisplay').innerText = `Active Session: ${cleanName}`;
-            document.getElementById('profileHandleDisplay').innerHTML = `<b>Handle:</b> ${cleanName}`;
+            document.getElementById('profileHandleDisplay').innerText = cleanName;
         }
 
-        // Handle Sign Out
         function handleLogout() {
             localStorage.removeItem('gates_user_session');
             document.getElementById('mainDashboardView').classList.remove('active');
@@ -394,40 +451,121 @@
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // Connect Fragment / Telegram Wallet Simulation
-        function connectTgWallet() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            const pill = document.getElementById('walletStatusText');
-            pill.innerText = "Connected (TON)";
-            pill.style.borderColor = "#ffffff";
-            tg.showAlert("Telegram Wallet / Fragment connection established.");
+        // Service Tab Switching
+        function switchService(panelId, btnElement) {
+            document.querySelectorAll('.service-panel').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.service-tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(panelId).classList.add('active');
+            btnElement.classList.add('active');
         }
 
-        // Fragment Username Listing Creator with Multi-Currency Options
-        function listNewUsername() {
-            const handle = prompt("Enter Telegram username handle to list (e.g., @yourname):");
-            if (!handle) return;
-
-            const currency = prompt("Select Currency Option (Type exact code: INR, USDT, TON, CRYPTO, STARS):");
-            if (!currency) return;
-
-            const price = prompt(`Enter listing price in ${currency.toUpperCase()}:`);
-            if (!price) return;
-
-            const container = document.getElementById('usernameMarketplaceList');
-            const item = document.createElement('div');
-            item.className = 'fragment-item';
-            item.innerHTML = `
-                <div class="fragment-info">
-                    <h4>${handle.startsWith('@') ? handle : '@' + handle}</h4>
-                    <p>Owner: Verified Escrow</p>
-                </div>
-                <div class="fragment-price">${price} ${currency.toUpperCase()}</div>
-            `;
-            container.prepend(item);
-
+        // Wallet Handshake Modal Process
+        function openWalletModal() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('walletModal').style.display = 'flex';
+        }
+        function closeWalletModal() {
+            document.getElementById('walletModal').style.display = 'none';
+        }
+        function executeWalletHandshake(walletType) {
+            closeWalletModal();
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            tg.showAlert("Username listed successfully on Fragment marketplace.");
+            
+            const pill = document.getElementById('walletStatusText');
+            pill.innerHTML = `<span>🟢</span> Connected`;
+            pill.style.borderColor = "#ffffff";
+            tg.showAlert(`${walletType} linked successfully via secure cryptographic handshake.`);
+        }
+
+        // Render Usernames with Empty State handling
+        function renderUsernames() {
+            const container = document.getElementById('usernameMarketplaceList');
+            if (usernamesData.length === 0) {
+                container.innerHTML = `<div class="empty-state">No usernames currently listed.</div>`;
+                return;
+            }
+            container.innerHTML = '';
+            usernamesData.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'fragment-item';
+                el.innerHTML = `
+                    <div class="fragment-info">
+                        <h4>${item.handle}</h4>
+                        <p>Owner: ${item.owner}</p>
+                    </div>
+                    <div class="fragment-price">${item.price} ${item.currency}</div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        // Render Middlemen with Empty State handling
+        function renderMiddlemen() {
+            const container = document.getElementById('middlemenListContainer');
+            if (middlemenData.length === 0) {
+                container.innerHTML = `<div class="empty-state">No middlemen available.</div>`;
+                return;
+            }
+            container.innerHTML = '';
+            middlemenData.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'mm-row';
+                el.innerHTML = `
+                    <div>
+                        <b>${item.name}</b><br>
+                        <span>${item.info}</span>
+                    </div>
+                    <div class="verified-tag">${item.tag}</div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        // Admin Mode Toggle (So only you can add items)
+        function toggleAdminMode() {
+            const adminPass = prompt("Enter Admin Passkey:");
+            if (adminPass === "xeno123" || adminPass === "admin") {
+                isAdminActive = !isAdminActive;
+                document.getElementById('adminStatusText').innerText = isAdminActive ? "ON" : "OFF";
+                document.getElementById('adminAddUsernameBtn').style.display = isAdminActive ? "block" : "none";
+                document.getElementById('adminAddMmBtn').style.display = isAdminActive ? "block" : "none";
+                tg.showAlert(isAdminActive ? "Admin Mode Enabled. You can now add listings." : "Admin Mode Disabled.");
+            } else if (adminPass) {
+                tg.showAlert("Incorrect admin passkey.");
+            }
+        }
+
+        // Admin Functions to Add Listings
+        function adminListUsername() {
+            const handle = prompt("Enter username handle (e.g. @gateway):");
+            if (!handle) return;
+            const currency = prompt("Enter currency (INR, USDT, TON, CRYPTO, STARS):");
+            if (!currency) return;
+            const price = prompt("Enter price amount:");
+            if (!price) return;
+            const owner = prompt("Enter owner handle (e.g. @feust):") || "@admin";
+
+            usernamesData.push({
+                handle: handle.startsWith('@') ? handle : '@' + handle,
+                owner: owner,
+                price: price,
+                currency: currency.toUpperCase()
+            });
+            renderUsernames();
+            tg.showAlert("Username listed successfully!");
+        }
+
+        function adminAddMiddleman() {
+            const name = prompt("Enter Middleman / Broker Name:");
+            if (!name) return;
+            const info = prompt("Enter details (Contact info / email):");
+            if (!info) return;
+            const tag = prompt("Enter tag badge (VERIFIED / OFFICIAL):") || "VERIFIED";
+
+            middlemenData.push({ name, info, tag: tag.toUpperCase() });
+            renderMiddlemen();
+            tg.showAlert("Middleman added successfully!");
         }
     </script>
 </body>
