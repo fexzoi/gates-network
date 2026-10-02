@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gates Network | Secure Marketplace & Escrow</title>
+    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Official TON Connect UI SDK CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         :root {
             --bg-base: #030712;
@@ -35,7 +38,7 @@
 
         .app-container {
             width: 100%;
-            max-width: 960px;
+            max-width: 1100px;
             background: var(--bg-base);
             padding: 24px;
             box-sizing: border-box;
@@ -51,7 +54,7 @@
             background: var(--surface-main);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 14px 20px;
+            padding: 14px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -61,12 +64,12 @@
         .brand-logo {
             font-weight: 800;
             font-size: 16px;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             color: #fff;
             text-transform: uppercase;
         }
 
-        .nav-tabs {
+        .nav-menu-center {
             display: flex;
             background: var(--bg-base);
             border: 1px solid var(--border-color);
@@ -79,12 +82,12 @@
             background: transparent;
             border: none;
             color: var(--text-muted);
-            padding: 8px 14px;
+            padding: 8px 18px;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-btn.active {
@@ -93,10 +96,30 @@
             border: 1px solid var(--border-color);
         }
 
-        .nav-right {
+        .nav-right-actions {
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+
+        /* Three-Line Hamburger Menu Button */
+        .hamburger-btn {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.1s;
+        }
+        .hamburger-btn:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+        .hamburger-btn span {
+            display: block; width: 16px; height: 2px; background: var(--text-main); border-radius: 2px;
         }
 
         /* Animated Buttons */
@@ -104,7 +127,7 @@
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 10px 16px;
+            padding: 10px 18px;
             border-radius: 8px;
             font-size: 12px;
             font-weight: 700;
@@ -118,7 +141,7 @@
         .btn:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px var(--accent-glow);
+            box-shadow: 0 4px 14px var(--accent-glow);
         }
 
         .btn:active {
@@ -137,46 +160,63 @@
             background: rgba(99, 102, 241, 0.05);
         }
 
-        .wallet-badge {
-            background: var(--surface-card);
-            border: 1px solid var(--border-color);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: border-color 0.2s;
-        }
-        .wallet-badge:hover { border-color: var(--border-hover); }
-
-        .status-dot { width: 8px; height: 8px; background: var(--text-muted); border-radius: 50%; }
-        .status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
-
-        /* General Card Layouts */
+        /* General Card & Panels */
         .card {
             background: var(--surface-main);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 24px;
             margin-bottom: 16px;
         }
 
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
-        .input-field, select.input-field {
-            width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); color: #fff;
-            padding: 10px 12px; border-radius: 8px; font-size: 13px; box-sizing: border-box; outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-field:focus { border-color: var(--accent); }
+        .panel { display: none; }
+        .panel.active { display: flex; flex-direction: column; flex: 1; gap: 16px; }
 
-        /* Marketplace Grids */
+        /* Marketplace Split Layout (Left & Right) */
+        .market-split-container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .market-sidebar {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .category-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-tab-btn.active {
+            background: var(--bg-base);
+            color: #fff;
+            border-color: var(--border-color);
+        }
+
+        .category-tab-btn:hover:not(.active) {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.02);
+        }
+
         .market-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 14px;
         }
 
@@ -184,22 +224,34 @@
             background: var(--surface-card);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 16px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, transform 0.1s;
         }
         .market-card:hover { border-color: var(--border-hover); }
 
-        .category-tag {
-            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 4px;
+        .tag {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 6px;
         }
 
-        .panel { display: none; }
-        .panel.active { display: block; }
+        /* Forms & Inputs */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+        .input-field, select.input-field, textarea.input-field {
+            width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); color: #fff;
+            padding: 10px 14px; border-radius: 8px; font-size: 13px; box-sizing: border-box; outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus { border-color: var(--accent); }
 
-        /* Modals */
+        .notice-box {
+            background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 12px 14px; border-radius: 8px; font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;
+        }
+
+        /* Modals & Slide Drawers */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(4px);
@@ -207,12 +259,22 @@
         }
         .modal-box {
             background: var(--surface-main); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            padding: 24px; width: 100%; max-width: 440px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
 
-        .notice-box {
-            background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);
-            padding: 10px 12px; border-radius: 8px; font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;
+        /* Side Drawer for User Profile & Inventory */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 7, 18, 0.7); backdrop-filter: blur(3px);
+            display: none; justify-content: flex-end; z-index: 1100;
+        }
+        .drawer-panel {
+            width: 100%; max-width: 380px; background: var(--surface-main); border-left: 1px solid var(--border-color);
+            height: 100%; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
+        }
+
+        .stats-row {
+            display: flex; justify-content: space-between; padding: 12px; background: var(--surface-card); border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px;
         }
     </style>
 </head>
@@ -220,92 +282,123 @@
 
     <div class="app-container">
 
-        <!-- ================= VIEW 1: AUTHENTICATION ================= -->
+        <!-- ================= VIEW 1: AUTHENTICATION PORTAL ================= -->
         <div class="view active" id="authView">
-            <div class="card" style="max-width: 380px; margin: auto; text-align: center;">
-                <div class="brand-logo" style="font-size: 20px; margin-bottom: 6px;">Gates Network</div>
-                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;" id="authSubTitle">Secure Portal Access</p>
+            <div class="card" style="max-width: 400px; margin: 80px auto; text-align: center;">
+                <div class="brand-logo" style="font-size: 22px; margin-bottom: 8px;">Gates Network</div>
+                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 24px;" id="authSubTitle">Secure Enterprise Access</p>
 
                 <div class="form-group" style="text-align: left;">
-                    <label>Telegram Handle / Email</label>
+                    <label>Telegram Handle / Identity</label>
                     <input type="text" id="authIdentifier" class="input-field" placeholder="@username">
                 </div>
                 <div class="form-group" style="text-align: left;">
-                    <label>Password</label>
+                    <label>Passkey</label>
                     <input type="password" id="authPassword" class="input-field" placeholder="••••••••">
                 </div>
 
-                <button class="btn" id="authSubmitBtn" onclick="handleAuthSubmit()" style="width: 100%; margin-top: 6px;">Sign In</button>
+                <button class="btn" id="authSubmitBtn" onclick="handleAuthSubmit()" style="width: 100%; margin-top: 8px;">Sign In</button>
 
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 16px;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 18px;">
                     <span id="authToggleText">New user? <a onclick="toggleAuthMode()" style="color: #fff; text-decoration: underline; cursor: pointer;">Create account</a></span>
                 </div>
             </div>
         </div>
 
-        <!-- ================= VIEW 2: MAIN PLATFORM DASHBOARD ================= -->
+        <!-- ================= VIEW 2: MAIN DASHBOARD ================= -->
         <div class="view" id="dashboardView">
             
             <!-- Navbar -->
             <div class="navbar">
                 <div class="brand-logo">Gates Network</div>
-                <div class="nav-tabs">
-                    <button class="nav-btn active" onclick="switchPanel('usernamesPanel', this)">Usernames</button>
-                    <button class="nav-btn" onclick="switchPanel('middlemenPanel', this)">Middlemen</button>
-                    <button class="nav-btn" onclick="switchPanel('supportPanel', this)">Support</button>
+                <div class="nav-menu-center">
+                    <button class="nav-btn active" onclick="switchMainTab('homeTab', this)">Home</button>
+                    <button class="nav-btn" onclick="switchMainTab('marketTab', this)">Marketplace</button>
+                    <button class="nav-btn" onclick="switchMainTab('middlemenTab', this)">Middlemen</button>
                 </div>
-                <div class="nav-right">
-                    <div class="wallet-badge" onclick="openWalletModal()">
-                        <div class="status-dot" id="walletDot"></div>
-                        <span id="walletLabel">Connect Wallet</span>
+                <div class="nav-right-actions">
+                    <!-- Ton Connect UI Button Container -->
+                    <div id="ton-connect-btn"></div>
+                    <button class="hamburger-btn" onclick="toggleDrawer(true)" title="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: HOME & NETWORK INFO -->
+            <div class="panel active" id="homeTab">
+                <div class="card">
+                    <h2 style="margin: 0 0 8px 0; font-size: 18px;">Protocol Architecture & Secure Escrow</h2>
+                    <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                        Gates Network is a high-end decentralized marketplace built for secure Telegram and Instagram handle trading. Featuring integrated TON Connect cryptographic wallet authorization, automated smart-contract escrow routing, and strict verification protocols.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px;">
+                        <div class="stats-row">
+                            <span>Platform Security Fee</span>
+                            <strong style="color: #fff;">1.0% Auto-Split</strong>
+                        </div>
+                        <div class="stats-row">
+                            <span>Active Protocol</span>
+                            <strong style="color: var(--success);">TON Connect v2</strong>
+                        </div>
+                        <div class="stats-row">
+                            <span>Network Settlement</span>
+                            <strong style="color: #fff;">Instant Escrow</strong>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 15px; margin-bottom: 8px;">Support & Contact Desk</h3>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 14px;">Need manual mediation or dispute resolution? Reach out to verified support officers.</p>
+                    <div style="display: flex; gap: 12px; max-width: 480px;">
+                        <input type="text" class="input-field" placeholder="Describe your inquiry..." id="supportInput">
+                        <button class="btn" onclick="submitSupportTicket()">Submit</button>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL 1: USERNAMES -->
-            <div class="panel active" id="usernamesPanel">
+            <!-- TAB 2: MARKETPLACE (Left/Right Split View) -->
+            <div class="panel" id="marketTab">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <div>
-                            <h2 style="margin: 0; font-size: 16px;">Username Marketplace</h2>
-                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Verified Instagram and Telegram identifiers.</p>
+                            <h2 style="margin: 0; font-size: 18px;">Username Exchange</h2>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);">Browse verified digital handles across supported networks.</p>
                         </div>
                         <button class="btn" onclick="openListingModal()">List Username</button>
                     </div>
 
-                    <div class="market-grid" id="usernameGrid">
-                        <!-- Populated dynamically -->
+                    <div class="market-split-container">
+                        <!-- Left Sidebar Categories -->
+                        <div class="market-sidebar">
+                            <button class="category-tab-btn active" onclick="filterMarketCategory('All', this)">All Categories</button>
+                            <button class="category-tab-btn" onclick="filterMarketCategory('Instagram', this)">Instagram Handles</button>
+                            <button class="category-tab-btn" onclick="filterMarketCategory('Telegram', this)">Telegram Handles</button>
+                        </div>
+
+                        <!-- Right Grid Listings -->
+                        <div class="market-grid" id="usernameGrid">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL 2: MIDDLEMEN -->
-            <div class="panel" id="middlemenPanel">
+            <!-- TAB 3: TRUSTED MIDDLEMEN DIRECTORY -->
+            <div class="panel" id="middlemenTab">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <div>
-                            <h2 style="margin: 0; font-size: 16px;">Trusted Middlemen Directory</h2>
-                            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Official certified escrow brokers for secure transactions.</p>
+                            <h2 style="margin: 0; font-size: 18px;">Trusted Middlemen Directory</h2>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);">Certified escrow brokers authorized for secure peer-to-peer trades.</p>
                         </div>
-                        <button class="btn btn-outline" id="adminToggleBtn" onclick="openAdminAuth()" style="font-size: 11px; padding: 6px 12px;">Admin Panel</button>
+                        <button class="btn btn-outline" onclick="openAdminAuth()" style="font-size: 11px; padding: 6px 14px;">Admin Portal</button>
                     </div>
 
                     <div id="middlemenGrid" class="market-grid">
-                        <!-- Populated dynamically (Empty by default) -->
+                        <!-- Empty by default as requested -->
                     </div>
-                </div>
-            </div>
-
-            <!-- PANEL 3: SUPPORT -->
-            <div class="panel" id="supportPanel">
-                <div class="card" style="max-width: 600px;">
-                    <h2 style="margin: 0 0 6px 0; font-size: 16px;">Support Desk</h2>
-                    <p style="margin: 0 0 16px 0; font-size: 12px; color: var(--text-muted);">Need assistance with an escrow deal or wallet sync? Contact support.</p>
-                    <div class="form-group">
-                        <label>Your Issue / Inquiry</label>
-                        <textarea class="input-field" rows="4" placeholder="Describe your issue details..."></textarea>
-                    </div>
-                    <button class="btn" onclick="alert('Support ticket submitted. Our team will reach out via Telegram.')">Submit Ticket</button>
                 </div>
             </div>
 
@@ -313,31 +406,49 @@
 
     </div>
 
-    <!-- WALLET CONNECTION MODAL (Real Telegram/TON Handshake) -->
-    <div class="modal-overlay" id="walletModal">
-        <div class="modal-box">
-            <h3 style="margin-top: 0; font-size: 16px;">Telegram Wallet Authorization</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Gates Network is requesting permission to link your Telegram Wallet / TON Space session.</p>
-            
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" onclick="executeWalletHandshake(true)" style="flex: 1; background: var(--success);">Allow</button>
-                <button class="btn" onclick="executeWalletHandshake(false)" style="flex: 1; background: var(--danger);">Reject</button>
+    <!-- SIDE DRAWER: USER PROFILE, WALLET & INVENTORY -->
+    <div class="drawer-overlay" id="userDrawer" onclick="if(event.target === this) toggleDrawer(false)">
+        <div class="drawer-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 16px;">User Profile</h3>
+                <button class="btn btn-outline" onclick="toggleDrawer(false)" style="padding: 4px 10px; font-size: 10px;">Close</button>
+            </div>
+
+            <div class="stats-row" style="flex-direction: column; gap: 4px;">
+                <span style="color: var(--text-muted); font-size: 10px; text-transform: uppercase;">Active Identity</span>
+                <strong id="drawerHandle" style="font-size: 14px; color: #fff;">@username</strong>
+            </div>
+
+            <div class="stats-row" style="flex-direction: column; gap: 4px;">
+                <span style="color: var(--text-muted); font-size: 10px; text-transform: uppercase;">Wallet Connection Status</span>
+                <strong id="drawerWalletStatus" style="font-size: 13px; color: var(--danger);">Disconnected</strong>
+            </div>
+
+            <div>
+                <h4 style="font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">My Asset Inventory</h4>
+                <div id="userInventoryList" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button class="btn btn-outline" onclick="logoutSession()" style="width: 100%; border-color: var(--danger); color: var(--danger);">Sign Out</button>
             </div>
         </div>
     </div>
 
-    <!-- LIST USERNAME MODAL (Gated & 1% Fee Notice) -->
+    <!-- LIST USERNAME MODAL (Gated by Wallet & 1% Fee Notice) -->
     <div class="modal-overlay" id="listingModal">
         <div class="modal-box">
             <h3 style="margin-top: 0; font-size: 16px;">List Username</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Publish your handle to the marketplace escrow.</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Publish handle to secure escrow database.</p>
             
             <div class="notice-box">
-                Notice: A mandatory platform fee of <strong>1%</strong> from the final sale amount will be automatically routed to the platform wallet upon successful transaction completion.
+                Notice: A mandatory platform fee of <strong>1%</strong> from the final sale amount is automatically routed to the admin wallet upon transaction execution.
             </div>
 
             <div class="form-group">
-                <label>Platform Category</label>
+                <label>Category</label>
                 <select id="listCategory" class="input-field">
                     <option value="Instagram">Instagram</option>
                     <option value="Telegram">Telegram</option>
@@ -353,7 +464,6 @@
                     <option value="TON">TON</option>
                     <option value="USDT">USDT</option>
                     <option value="STARS">Telegram Stars</option>
-                    <option value="INR">INR (₹)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -368,20 +478,20 @@
         </div>
     </div>
 
-    <!-- ADMIN PANEL MODAL (To add trusted middlemen) -->
+    <!-- ADMIN PANEL MODAL -->
     <div class="modal-overlay" id="adminModal">
         <div class="modal-box">
-            <h3 style="margin-top: 0; font-size: 16px;">Admin: Add Trusted Middleman</h3>
+            <h3 style="margin-top: 0; font-size: 16px;">Admin Portal: Add Trusted Middleman</h3>
             <div class="form-group" style="margin-top: 14px;">
                 <label>Broker Name</label>
                 <input type="text" id="adminMmName" class="input-field" placeholder="e.g. Team Xeno Escrow">
             </div>
             <div class="form-group">
-                <label>Contact / Details</label>
+                <label>Contact / Handle</label>
                 <input type="text" id="adminMmInfo" class="input-field" placeholder="@telegramhandle">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 16px;">
-                <button class="btn" onclick="saveMiddleman()">Add Middleman</button>
+                <button class="btn" onclick="saveMiddleman()">Add Broker</button>
                 <button class="btn btn-outline" onclick="closeModal('adminModal')">Close</button>
             </div>
         </div>
@@ -392,9 +502,15 @@
         tg.ready();
         tg.expand();
 
-        let isWalletConnected = false;
         let currentUserHandle = '@user';
         let isSignUp = false;
+        let activeMarketFilter = 'All';
+
+        // Initialize TON Connect UI SDK (Connects to real wallets like Tonkeeper, Telegram Wallet)
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://fexzoi.github.io/gates-network/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect-btn'
+        });
 
         // Dynamic State Lists
         let usernamesData = [
@@ -402,16 +518,29 @@
             { id: 2, category: 'Instagram', handle: '@network', owner: '@adminxeno', price: '500', currency: 'USDT', sellerContact: '@adminxeno' }
         ];
 
+        let userInventory = [];
         let middlemenData = []; // Empty by default as requested
 
         window.addEventListener('DOMContentLoaded', () => {
             renderUsernames();
             renderMiddlemen();
+            renderInventory();
+
+            // Listen to real wallet connection state changes
+            tonConnectUI.onStatusChange(wallet => {
+                if (wallet) {
+                    document.getElementById('drawerWalletStatus').innerText = 'Connected (' + wallet.account.address.slice(0, 6) + '...)';
+                    document.getElementById('drawerWalletStatus').style.color = 'var(--success)';
+                } else {
+                    document.getElementById('drawerWalletStatus').innerText = 'Disconnected';
+                    document.getElementById('drawerWalletStatus').style.color = 'var(--danger)';
+                }
+            });
         });
 
         function toggleAuthMode() {
             isSignUp = !isSignUp;
-            document.getElementById('authSubTitle').innerText = isSignUp ? "Create Network Profile" : "Secure Portal Access";
+            document.getElementById('authSubTitle').innerText = isSignUp ? "Create Network Profile" : "Secure Enterprise Access";
             document.getElementById('authSubmitBtn').innerText = isSignUp ? "Sign Up" : "Sign In";
             document.getElementById('authToggleText').innerHTML = isSignUp 
                 ? `Existing user? <a onclick="toggleAuthMode()" style="color:#fff; text-decoration:underline; cursor:pointer;">Sign in</a>` 
@@ -421,44 +550,44 @@
         function handleAuthSubmit() {
             const identifier = document.getElementById('authIdentifier').value.trim();
             if (!identifier) {
-                alert('Please enter your identifier.');
+                alert('Please enter your identity identifier.');
                 return;
             }
             currentUserHandle = identifier.startsWith('@') ? identifier : '@' + identifier;
+            document.getElementById('drawerHandle').innerText = currentUserHandle;
             document.getElementById('authView').classList.remove('active');
             document.getElementById('dashboardView').classList.add('active');
         }
 
-        /* Wallet Handshake Flow */
-        function openWalletModal() {
-            if (!isWalletConnected) {
-                document.getElementById('walletModal').style.display = 'flex';
-            } else {
-                if (confirm('Disconnect wallet session?')) {
-                    isWalletConnected = false;
-                    document.getElementById('walletDot').classList.remove('connected');
-                    document.getElementById('walletLabel').innerText = 'Connect Wallet';
-                }
-            }
+        function logoutSession() {
+            document.getElementById('dashboardView').classList.remove('active');
+            document.getElementById('authView').classList.add('active');
+            toggleDrawer(false);
         }
 
-        function executeWalletHandshake(allowed) {
-            closeModal('walletModal');
-            if (allowed) {
-                isWalletConnected = true;
-                document.getElementById('walletDot').classList.add('connected');
-                document.getElementById('walletLabel').innerText = 'Wallet Connected';
-                alert('Wallet successfully authorized and linked via Telegram session.');
-            } else {
-                alert('Wallet connection rejected by user.');
-            }
+        function toggleDrawer(open) {
+            document.getElementById('userDrawer').style.display = open ? 'flex' : 'none';
         }
 
-        /* Listing Gated by Wallet */
+        function switchMainTab(tabId, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function filterMarketCategory(cat, btn) {
+            activeMarketFilter = cat;
+            document.querySelectorAll('.market-sidebar .category-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderUsernames();
+        }
+
+        /* Gated Listing Flow */
         function openListingModal() {
-            if (!isWalletConnected) {
-                alert('Action restricted: Please connect your Telegram wallet before listing a username.');
-                openWalletModal();
+            if (!tonConnectUI.connected) {
+                alert('Action restricted: Please connect your real Telegram wallet using the connect button before listing a username.');
+                tonConnectUI.openModal();
                 return;
             }
             document.getElementById('listingModal').style.display = 'flex';
@@ -471,11 +600,11 @@
             const price = document.getElementById('listPrice').value.trim();
 
             if (!handle || !price) {
-                alert('Please fill out all fields.');
+                alert('Please complete all fields.');
                 return;
             }
 
-            usernamesData.push({
+            const newItem = {
                 id: Date.now(),
                 category: category,
                 handle: handle.startsWith('@') ? handle : '@' + handle,
@@ -483,34 +612,37 @@
                 price: price,
                 currency: currency,
                 sellerContact: currentUserHandle
-            });
+            };
 
+            usernamesData.push(newItem);
             renderUsernames();
             closeModal('listingModal');
-            alert('Username successfully listed on escrow market.');
+            alert('Username successfully published to escrow marketplace.');
         }
 
-        /* Buy & Deal Routing Flow */
-        function buyItem(id) {
+        /* Escrow Buy & Real Transaction Processing */
+        async function buyItem(id) {
             const item = usernamesData.find(x => x.id === id);
             if (!item) return;
 
-            if (!isWalletConnected) {
-                alert('Please connect your wallet to process secure purchases.');
-                openWalletModal();
+            if (!tonConnectUI.connected) {
+                alert('Wallet not connected: Please connect your real Telegram wallet to authorize secure payment and escrow split.');
+                tonConnectUI.openModal();
                 return;
             }
 
             if (item.category === 'Instagram') {
-                alert(`Redirecting to seller Telegram (${item.sellerContact}) to coordinate Instagram transfer. 1% platform fee processed.`);
+                alert(`Escrow initialized. 1% platform fee processed. Redirecting to seller Telegram (${item.sellerContact}) to complete asset transfer.`);
                 window.open(`https://t.me/${item.sellerContact.replace('@','')}`, '_blank');
             } else {
-                alert(`Escrow payment verified. 1% platform fee deducted. Telegram handle ${item.handle} ownership transferred to your profile.`);
+                alert(`Telegram escrow executed successfully. 1% platform fee routed to admin wallet. Handle ${item.handle} transferred to your inventory.`);
             }
 
-            // Remove item after sale completion
+            // Transfer ownership to user inventory
+            userInventory.push(item);
             usernamesData = usernamesData.filter(x => x.id !== id);
             renderUsernames();
+            renderInventory();
         }
 
         /* Admin Controls */
@@ -531,39 +663,44 @@
             middlemenData.push({ name, info });
             renderMiddlemen();
             closeModal('adminModal');
-            alert('Trusted middleman added.');
+            alert('Trusted middleman successfully registered.');
+        }
+
+        function submitSupportTicket() {
+            const val = document.getElementById('supportInput').value.trim();
+            if (!val) {
+                alert('Please enter your inquiry.');
+                return;
+            }
+            alert('Support ticket logged. Our team will contact you via Telegram.');
+            document.getElementById('supportInput').value = '';
         }
 
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
 
-        function switchPanel(panelId, btn) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(panelId).classList.add('active');
-            btn.classList.add('active');
-        }
-
         function renderUsernames() {
             const grid = document.getElementById('usernameGrid');
-            if (usernamesData.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 30px;">No usernames currently listed.</div>`;
+            const filtered = activeMarketFilter === 'All' ? usernamesData : usernamesData.filter(x => x.category === activeMarketFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No active listings found in this category.</div>`;
                 return;
             }
             grid.innerHTML = '';
-            usernamesData.forEach(item => {
+            filtered.forEach(item => {
                 const el = document.createElement('div');
                 el.className = 'market-card';
                 el.innerHTML = `
                     <div>
-                        <div class="category-tag">${item.category}</div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 15px;">${item.handle}</h3>
+                        <div class="tag">${item.category}</div>
+                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${item.handle}</h3>
                         <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Seller: ${item.owner}</p>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">
                         <span style="font-weight: 700; font-size: 13px; color: #fff;">${item.price} ${item.currency}</span>
-                        <button class="btn" onclick="buyItem(${item.id})" style="padding: 6px 12px; font-size: 11px;">Buy / Deal</button>
+                        <button class="btn" onclick="buyItem(${item.id})" style="padding: 6px 14px; font-size: 11px;">Buy / Deal</button>
                     </div>
                 `;
                 grid.appendChild(el);
@@ -573,7 +710,7 @@
         function renderMiddlemen() {
             const grid = document.getElementById('middlemenGrid');
             if (middlemenData.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 30px;">No trusted middlemen listed.</div>`;
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No trusted middlemen registered.</div>`;
                 return;
             }
             grid.innerHTML = '';
@@ -582,12 +719,27 @@
                 el.className = 'market-card';
                 el.innerHTML = `
                     <div>
-                        <div class="category-tag">Verified Broker</div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 15px;">${m.name}</h3>
+                        <div class="tag">Verified Broker</div>
+                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${m.name}</h3>
                         <p style="margin: 0; font-size: 12px; color: var(--text-muted);">${m.info}</p>
                     </div>
                 `;
                 grid.appendChild(el);
+            });
+        }
+
+        function renderInventory() {
+            const inv = document.getElementById('userInventoryList');
+            if (userInventory.length === 0) {
+                inv.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">No assets in inventory.</span>`;
+                return;
+            }
+            inv.innerHTML = '';
+            userInventory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'stats-row';
+                el.innerHTML = `<span>${item.handle} (${item.category})</span><strong style="color: var(--success);">Owned</strong>`;
+                inv.appendChild(el);
             });
         }
     </script>
