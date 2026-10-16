@@ -78,3 +78,26 @@ def test_wix_adapter_is_disabled_by_default(monkeypatch):
     response = client.post("/v1/wix/process-pending", headers=HEADERS)
     assert response.status_code == 503
     assert "disabled" in response.json()["detail"].lower()
+
+
+
+def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+    def fake_patch(url, *, headers, json, timeout):
+        captured.update({"url": url, "headers": headers, "json": json, "timeout": timeout})
+        return FakeResponse()
+
+    monkeypatch.setattr(moderation_app.httpx, "patch", fake_patch)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    moderation_app._wix_mark_moderated("submission-123", "AI Rejected")
+
+    assert captured["url"].endswith("/wix-data/v2/items/submission-123")
+    assert captured["json"]["patch"]["fieldModifications"][0]["fieldPath"] == "status"
+    assert captured["json"]["patch"]["fieldModifications"][0]["setFieldOptions"]["value"] == "AI Rejected"
+    assert captured["json"]["condition"]["filter"] == {"status": "Pending review"}
