@@ -1,8 +1,8 @@
 import os
 
 os.environ.setdefault("MODERATION_API_TOKEN", "test-secret")
-os.environ.setdefault("MODERATION_DB_PATH", ":memory:")
 
+import pytest
 from fastapi.testclient import TestClient
 import app as moderation_app
 
@@ -18,6 +18,12 @@ PAYLOAD = {
     "seller_name": "Example Seller",
     "seller_contact_url": "https://example.com/contact",
 }
+
+
+@pytest.fixture(autouse=True)
+def isolated_audit_database(tmp_path, monkeypatch):
+    # Each test gets a real temporary SQLite file; separate :memory: connections do not share tables.
+    monkeypatch.setattr(moderation_app, "DB_PATH", str(tmp_path / "audit.sqlite3"))
 
 
 def test_health_discloses_publishing_is_disabled():
