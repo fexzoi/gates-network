@@ -50,3 +50,10 @@ pytest -q
 ```
 
 Do not point the seller form at this service until the Wix server-to-server integration and end-to-end tests are completed. This first commit is a staging-only component.
+
+
+## Wix staging adapter (disabled by default)
+
+The authenticated `POST /v1/wix/process-pending` endpoint can query pending submissions and update only the private submission `status` field to `AI Approved - Awaiting Publish` or `AI Rejected`. It **never creates or activates a public listing**. It is disabled unless `WIX_AUTOMATION_ENABLED=true`, and requires server-side `WIX_API_KEY`, `WIX_SITE_ID`, and the verified submissions collection ID.
+
+Before enabling this adapter, verify the Wix API key has only the needed CMS permissions, confirm the exact Wix site ID and collection ID, verify the REST API request shape against the site's API access, and test against non-production submissions. The current adapter is an integration scaffold; do not enable it until these checks are complete. The audit database must be moved to persistent/managed storage before production.
