@@ -1,6 +1,6 @@
 # GTS - GATES NETWORK AI Moderation (staging)
 
-This service is the first, isolated backend component for marketplace moderation. It is intentionally **not connected to Wix writes or publication** yet.
+This service is the first, isolated backend component for marketplace moderation. It has an optional Wix CMS staging adapter, but that adapter is **disabled by default** and has not been validated against live site credentials.
 
 ## What it does
 
