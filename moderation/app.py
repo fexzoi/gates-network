@@ -221,3 +221,133 @@ def list_audit(limit: int = Query(default=50, ge=1, le=200), submission_id: str 
     } for row in rows]}
 
 # Intentionally no Wix write/publish integration in this phase.
+
+
+# Optional Wix CMS connector. It is intentionally disabled until an operator has
+# configured and verified the site/collection IDs and API permissions.
+import httpx
+
+WIX_API_BASE = "https://www.wixapis.com"
+WIX_API_KEY = os.getenv("WIX_API_KEY", "")
+WIX_SITE_ID = os.getenv("WIX_SITE_ID", "")
+WIX_SUBMISSIONS_COLLECTION_ID = os.getenv("WIX_SUBMISSIONS_COLLECTION_ID", "gtsSellerSubmissions")
+WIX_AUTOMATION_ENABLED = os.getenv("WIX_AUTOMATION_ENABLED", "false").lower() == "true"
+
+
+def _wix_headers() -> dict[str, str]:
+    if not WIX_API_KEY or not WIX_SITE_ID:
+        raise RuntimeError("wix_not_configured")
+    return {
+        "Authorization": f"Bearer {WIX_API_KEY}",
+        "wix-site-id": WIX_SITE_ID,
+        "Content-Type": "application/json",
+    }
+
+
+def _wix_query_pending(limit: int = 10) -> list[dict]:
+    response = httpx.post(
+        f"{WIX_API_BASE}/wix-data/v2/items/query",
+        headers=_wix_headers(),
+        json={
+            "dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
+            "query": {
+                "filter": {"status": {"$eq": "Pending review"}},
+                "paging": {"limit": limit, "offset": 0},
+            },
+        },
+        timeout=20.0,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return payload.get("dataItems", payload.get("items", []))
+
+
+def _wix_mark_moderated(item_id: str, status: str) -> None:
+    # Only changes the private submission status. Never creates/updates public listings.
+    response = httpx.patch(
+        f"{WIX_API_BASE}/wix-data/v2/items/{item_id}",
+        headers=_wix_headers(),
+        json={
+            "dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
+            "patch": {
+                "dataItemId": item_id,
+                "fieldModifications": [{
+                    "fieldPath": "status",
+                    "action": "SET_FIELD",
+                    "setFieldOptions": {"value": status},
+                }],
+            },
+        },
+        timeout=20.0,
+    )
+    response.raise_for_status()
+
+
+@app.post("/v1/wix/process-pending", dependencies=[Depends(_auth)])
+def process_wix_pending(limit: int = Query(default=5, ge=1, le=10)) -> dict:
+    """Staging-only batch processor. Requires explicit server-side enablement; never publishes."""
+    if not WIX_AUTOMATION_ENABLED:
+        raise HTTPException(status_code=503, detail="Wix automation is disabled until credentials and collection IDs are verified")
+    if not WIX_API_KEY or not WIX_SITE_ID:
+        raise HTTPException(status_code=503, detail="Wix server credentials are not configured")
+    try:
+        items = _wix_query_pending(limit)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Could not read Wix submissions; no listings were published") from exc
+
+    results = []
+    for item in items:
+        data = item.get("data", item)
+        item_id = item.get("id") or data.get("_id")
+        if not item_id:
+            results.append({"submission_id": None, "status": "error", "reason": "missing_item_id"})
+            continue
+        submission_id = str(item_id)
+        try:
+            listing = ListingSubmission(
+                submission_id=submission_id,
+                title=data.get("title", ""),
+                platform=data.get("platform", ""),
+                category=data.get("category", ""),
+                description=data.get("description", ""),
+                price_text=data.get("priceText", ""),
+                seller_name=data.get("sellerName", ""),
+                seller_contact_url=data.get("sellerContactUrl", ""),
+            )
+            # Idempotency check: completed decisions are reused rather than re-scored.
+            with _db() as connection:
+                previous = connection.execute(
+                    "SELECT * FROM moderation_audit WHERE submission_id = ? AND status = 'completed' ORDER BY created_at DESC LIMIT 1",
+                    (submission_id,),
+                ).fetchone()
+            if previous:
+                decision = Decision(
+                    decision=previous["decision"], risk_score=previous["risk_score"],
+                    confidence=previous["confidence"], reasons=json.loads(previous["reasons_json"]),
+                    policy_flags=json.loads(previous["policy_flags_json"]),
+                )
+            else:
+                if not listing.seller_contact_url.lower().startswith(("https://", "http://")):
+                    decision = Decision(decision="reject", risk_score=90, confidence=100,
+                        reasons=["Seller contact must use an HTTP(S) URL."], policy_flags=["invalid_contact_url"])
+                else:
+                    decision = moderate_with_openai(listing)
+                if decision.decision == "approve" and (decision.risk_score >= 35 or decision.confidence < 75):
+                    decision.decision = "reject"
+                    decision.reasons.append("Conservative safety gate: approval threshold was not met.")
+                    decision.policy_flags.append("approval_threshold_not_met")
+                _audit(submission_id, decision, status="completed")
+            new_status = "AI Approved - Awaiting Publish" if decision.decision == "approve" else "AI Rejected"
+            _wix_mark_moderated(submission_id, new_status)
+            results.append({
+                "submission_id": submission_id,
+                "decision": decision.decision,
+                "status": new_status,
+                "reasons": decision.reasons,
+                "published": False,
+            })
+        except Exception as exc:
+            # Leave the CMS item pending if processing/update failed; log failure without publishing.
+            _audit(submission_id, None, status="error", error_code=type(exc).__name__[:80])
+            results.append({"submission_id": submission_id, "status": "error", "reason": "processing_failed", "published": False})
+    return {"processed": len(results), "items": results, "published": False}
