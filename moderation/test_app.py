@@ -71,3 +71,10 @@ def test_openai_failure_fails_closed(monkeypatch):
     audit = client.get("/v1/audit", headers=HEADERS, params={"submission_id": "test-provider-failure"})
     assert audit.status_code == 200
     assert audit.json()["items"][0]["status"] == "error"
+
+
+def test_wix_adapter_is_disabled_by_default(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", False)
+    response = client.post("/v1/wix/process-pending", headers=HEADERS)
+    assert response.status_code == 503
+    assert "disabled" in response.json()["detail"].lower()
