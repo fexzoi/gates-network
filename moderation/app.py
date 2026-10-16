@@ -251,7 +251,7 @@ def _wix_query_pending(limit: int = 10) -> list[dict]:
         json={
             "dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
             "query": {
-                "filter": {"status": {"$eq": "Pending review"}},
+                "filter": {"status": "Pending review"},
                 "paging": {"limit": limit, "offset": 0},
             },
         },
@@ -276,6 +276,9 @@ def _wix_mark_moderated(item_id: str, status: str) -> None:
                     "action": "SET_FIELD",
                     "setFieldOptions": {"value": status},
                 }],
+            },
+            "condition": {
+                "filter": {"status": "Pending review"}
             },
         },
         timeout=20.0,
