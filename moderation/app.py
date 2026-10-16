@@ -158,10 +158,6 @@ def moderate_with_openai(listing: ListingSubmission) -> Decision:
         raise RuntimeError("empty_model_response")
     parsed = json.loads(raw)
     decision = Decision.model_validate(parsed)
-    if decision.decision == "approve" and (decision.risk_score >= 35 or decision.confidence < 75):
-        decision.decision = "reject"
-        decision.reasons.append("Conservative safety gate: approval threshold was not met.")
-        decision.policy_flags.append("approval_threshold_not_met")
     return decision
 
 @app.get("/health")
@@ -190,6 +186,11 @@ def moderate_listing(listing: ListingSubmission) -> ModerationResult:
                                 reasons=["Seller contact must use an HTTP(S) URL."], policy_flags=["invalid_contact_url"])
         else:
             decision = moderate_with_openai(listing)
+        # Enforce approval thresholds at the endpoint boundary, independent of the model adapter.
+        if decision.decision == "approve" and (decision.risk_score >= 35 or decision.confidence < 75):
+            decision.decision = "reject"
+            decision.reasons.append("Conservative safety gate: approval threshold was not met.")
+            decision.policy_flags.append("approval_threshold_not_met")
     except Exception as exc:
         error_code = type(exc).__name__[:80]
         _audit(listing.submission_id, None, status="error", error_code=error_code)
