@@ -101,3 +101,21 @@ def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
     assert captured["json"]["patch"]["fieldModifications"][0]["fieldPath"] == "status"
     assert captured["json"]["patch"]["fieldModifications"][0]["setFieldOptions"]["value"] == "AI Rejected"
     assert captured["json"]["condition"]["filter"] == {"status": "Pending review"}
+
+
+def test_contact_url_validation_rejects_non_http_and_malformed_urls():
+    assert moderation_app._valid_contact_url("https://example.com/contact")
+    assert moderation_app._valid_contact_url("http://example.com")
+    assert not moderation_app._valid_contact_url("javascript:alert(1)")
+    assert not moderation_app._valid_contact_url("ftp://example.com/file")
+    assert not moderation_app._valid_contact_url("https:///missing-host")
+    assert not moderation_app._valid_contact_url("https://example.com/a b")
+    assert not moderation_app._valid_contact_url("not-a-url")
+
+
+def test_dashboard_is_served_without_caching():
+    response = client.get("/dashboard")
+    assert response.status_code == 200
+    assert "Moderation Console" in response.text
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-frame-options"] == "DENY"
