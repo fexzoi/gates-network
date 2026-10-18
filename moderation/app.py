@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse
@@ -110,6 +111,14 @@ def _audit(submission_id: str, decision: Decision | None, *, status: str, error_
     }
 
 
+def _valid_contact_url(value: str) -> bool:
+    try:
+        parsed = urlsplit(value.strip())
+        return parsed.scheme.lower() in {"http", "https"} and bool(parsed.hostname) and not any(ch.isspace() for ch in value)
+    except (TypeError, ValueError):
+        return False
+
+
 def _auth(authorization: str | None = Header(default=None)) -> None:
     expected = os.getenv("MODERATION_API_TOKEN", "")
     if not expected:
@@ -191,7 +200,7 @@ def moderate_listing(listing: ListingSubmission) -> ModerationResult:
         )
     # Fail closed: errors are logged and returned as service errors, never as approvals.
     try:
-        if not listing.seller_contact_url.lower().startswith(("https://", "http://")):
+        if not _valid_contact_url(listing.seller_contact_url):
             decision = Decision(decision="reject", risk_score=90, confidence=100,
                                 reasons=["Seller contact must use an HTTP(S) URL."], policy_flags=["invalid_contact_url"])
         else:
