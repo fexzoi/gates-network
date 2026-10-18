@@ -349,7 +349,7 @@ def process_wix_pending(limit: int = Query(default=5, ge=1, le=10)) -> dict:
                     policy_flags=json.loads(previous["policy_flags_json"]),
                 )
             else:
-                if not listing.seller_contact_url.lower().startswith(("https://", "http://")):
+                if not _valid_contact_url(listing.seller_contact_url):
                     decision = Decision(decision="reject", risk_score=90, confidence=100,
                         reasons=["Seller contact must use an HTTP(S) URL."], policy_flags=["invalid_contact_url"])
                 else:
