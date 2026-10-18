@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
 app = FastAPI(
@@ -19,7 +20,8 @@ app = FastAPI(
     description="AI listing decisions and audit logging. Publishing is deliberately disabled.",
 )
 
-DB_PATH = os.getenv("MODERATION_DB_PATH", "./moderation_audit.sqlite3")
+DEFAULT_DB_PATH = "/data/moderation_audit.sqlite3" if Path("/data").is_dir() else "./moderation_audit.sqlite3"
+DB_PATH = os.getenv("MODERATION_DB_PATH", DEFAULT_DB_PATH)
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 class ListingSubmission(BaseModel):
@@ -159,6 +161,14 @@ def moderate_with_openai(listing: ListingSubmission) -> Decision:
     parsed = json.loads(raw)
     decision = Decision.model_validate(parsed)
     return decision
+
+@app.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
+def moderation_dashboard() -> HTMLResponse:
+    """Serve the same-origin admin UI; credentials are entered by the operator and kept in page memory only."""
+    dashboard_path = Path(__file__).resolve().parent / "dashboard.html"
+    if not dashboard_path.is_file():
+        raise HTTPException(status_code=404, detail="Dashboard asset is not installed")
+    return HTMLResponse(dashboard_path.read_text(encoding="utf-8"), headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer"})
 
 @app.get("/health")
 def health() -> dict:
