@@ -1,6 +1,6 @@
 # GTS - GATES NETWORK AI Moderation (staging)
 
-This service is the first, isolated backend component for marketplace moderation. It has an optional Wix CMS staging adapter, but that adapter is **disabled by default** and has not been validated against live site credentials.
+This service is the isolated backend component for GTS marketplace moderation. It includes a same-origin admin dashboard and an optional Wix CMS staging adapter. Wix automation remains **disabled by default** and has not been validated end-to-end against live site records.
 
 ## What it does
 
@@ -9,12 +9,14 @@ This service is the first, isolated backend component for marketplace moderation
 - Applies a conservative approval threshold: an approval with risk score >= 35 or confidence < 75 is changed to rejection.
 - Logs every completed decision and provider failure with timestamp, model, decision, score, reasons and policy flags.
 - Authenticated `GET /v1/audit` endpoint.
+- Same-origin admin console at `/dashboard` for manual reviews and audit inspection. The bearer token is held in page memory only and is not saved in browser storage.
+- SQLite database defaults to `/data/moderation_audit.sqlite3` when the Railway `/data` volume is mounted; `MODERATION_DB_PATH` can override this.
 - Repeated completed submissions are idempotent by `submission_id`.
 - Provider/configuration failures fail closed; no approval is returned and publication remains disabled.
 
 ## Explicit safety boundary
 
-`published` is always `false`. This service does not call Wix, does not update either CMS collection, and cannot activate or publish a listing. A future integration must authenticate server-to-server, confirm the submission's actual Wix record and current status, validate the AI result, and only then implement a separately tested publish step. Do not enable publication until integration and staging tests pass.
+`published` is always `false`. The moderation endpoint and dashboard do not publish listings. A separate optional Wix staging endpoint can read submissions marked `Pending review` and update only the private submission status when explicitly enabled; it does not create or activate a public listing. That adapter is an unvalidated integration scaffold. Keep `WIX_AUTOMATION_ENABLED=false` until field mappings, API permissions, conditional status updates, and end-to-end staging behavior are verified. Publishing is not implemented.
 
 ## Run locally
 
@@ -35,13 +37,15 @@ Set these environment variables in your shell or hosting provider's secret setti
 - `OPENAI_API_KEY`: OpenAI API key (never commit it).
 - `MODERATION_API_TOKEN`: long random bearer token required by moderation/audit endpoints.
 - `OPENAI_MODEL`: model identifier supported by your OpenAI project; defaults to `gpt-4.1-mini`.
-- `MODERATION_DB_PATH`: SQLite path. SQLite is suitable for local/staging tests; for production on ephemeral hosting, use persistent storage or managed PostgreSQL before relying on audit retention.
+- `MODERATION_DB_PATH`: SQLite path. On Railway, set this to `/data/moderation_audit.sqlite3` to keep audit records on the attached `/data` volume. Without an override, the app uses that path when `/data` exists and a local SQLite file otherwise. Confirm the volume is attached before relying on audit retention.
 
 ## API
 
 - `GET /health` — public liveness check; reports that publication is disabled.
 - `POST /v1/moderate` — requires `Authorization: Bearer <MODERATION_API_TOKEN>` and JSON body with `submission_id`, `title`, `platform`, `category`, `description`, `price_text`, `seller_name`, `seller_contact_url`.
 - `GET /v1/audit?limit=50` — same authorization; optional `submission_id` filter.
+- `GET /dashboard` — same-origin browser console; enter the bearer token to load audit history and submit manual moderation requests.
+- `POST /v1/wix/process-pending?limit=5` — disabled unless `WIX_AUTOMATION_ENABLED=true`; staging-only status updates, never publication.
 
 ## Tests
 
@@ -49,7 +53,7 @@ Set these environment variables in your shell or hosting provider's secret setti
 pytest -q
 ```
 
-Do not point the seller form at this service until the Wix server-to-server integration and end-to-end tests are completed. This first commit is a staging-only component.
+This service is still staging-only. The dashboard is an operator console, not a public seller form. Do not connect the public seller form or enable Wix automation until the adapter has been validated against real test submissions and field mappings.
 
 
 ## Wix staging adapter (disabled by default)
