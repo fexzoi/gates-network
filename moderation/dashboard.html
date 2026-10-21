@@ -124,14 +124,14 @@
     try {
       const data = await api("/v1/wix/submissions");
       const c = data.counts || {};
-      byId("queue-counts").textContent = "Pending " + (c.pending || 0) + " · Approved " + (c.approved || 0) + " · Rejected " + (c.rejected || 0);
+      byId("queue-counts").textContent = "Pending " + (c.pending || 0) + " · Approved " + (c.approved || 0) + " · Rejected " + (c.rejected || 0) + " · AI awaiting " + (c.other || 0);
       if (!data.items || !data.items.length) {
         const empty = document.createElement("p"); empty.className = "help"; empty.textContent = "No pending submissions. New seller submissions will appear here."; list.appendChild(empty);
       }
       for (const item of data.items || []) {
         const card = document.createElement("article"); card.className = "panel"; card.style.padding = "16px";
         const heading = document.createElement("h2"); heading.textContent = item.productName || item.title || "Untitled listing"; card.appendChild(heading);
-        const meta = document.createElement("p"); meta.className = "help"; meta.textContent = [item.title, item.platform, item.category, item.priceText, item.sellerName].filter(Boolean).join(" · "); card.appendChild(meta);
+        const meta = document.createElement("p"); meta.className = "help"; meta.textContent = [item.status, item.title, item.platform, item.category, item.priceText, item.sellerName].filter(Boolean).join(" · "); card.appendChild(meta);
         const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = item.description || "No description supplied."; card.appendChild(desc);
         if (item.sellerContactUrl) {
           const contact = document.createElement("a"); contact.href = item.sellerContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
