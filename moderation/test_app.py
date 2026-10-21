@@ -119,3 +119,26 @@ def test_dashboard_is_served_without_caching():
     assert "Moderation Console" in response.text
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-frame-options"] == "DENY"
+
+
+def test_admin_queue_requires_authentication():
+    response = client.get("/v1/wix/submissions")
+    assert response.status_code == 401
+
+
+def test_admin_decision_requires_authentication():
+    response = client.post("/v1/wix/submissions/submission-123/decision", json={"action":"reject","reason":"Policy violation"})
+    assert response.status_code == 401
+
+
+def test_admin_queue_stays_disabled_until_wix_integration_enabled(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", False)
+    response = client.get("/v1/wix/submissions", headers=HEADERS)
+    assert response.status_code == 503
+    assert "disabled" in response.json()["detail"].lower()
+
+
+def test_admin_decision_reason_validation():
+    response = client.post("/v1/wix/submissions/submission-123/decision",
+                           json={"action":"reject","reason":"x"}, headers=HEADERS)
+    assert response.status_code == 422
