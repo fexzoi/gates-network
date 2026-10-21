@@ -457,8 +457,10 @@ def admin_list_submissions() -> dict:
     """Load pending submissions and moderation counts for the authenticated admin console."""
     _require_wix_admin()
     try:
-        pending = _wix_query_status("Pending review", limit=100)
-        counts = {"pending": len(pending), "approved": 0, "rejected": 0, "other": 0}
+        pending = []
+        for review_status in ("Pending review", "AI Approved - Awaiting Publish", "AI Rejected"):
+            pending.extend(_wix_query_status(review_status, limit=100))
+        counts = {"pending": len(_wix_query_status("Pending review", limit=100)), "approved": 0, "rejected": 0, "other": 0}
         for status, key in [
             ("Approved", "approved"), ("Rejected", "rejected"),
             ("AI Approved - Awaiting Publish", "other"), ("AI Rejected", "rejected"),
@@ -496,26 +498,33 @@ def admin_decide_submission(submission_id: str, request: AdminDecisionRequest) -
     if not submission_id or len(submission_id) > 128 or any(ch in submission_id for ch in "/\\?#"):
         raise HTTPException(status_code=400, detail="Invalid submission ID")
     try:
-        pending = _wix_query_status("Pending review", limit=100)
-        matched = next((row for row in pending if str(row.get("id") or row.get("data", {}).get("_id") or "") == submission_id), None)
-        if not matched:
-            raise HTTPException(status_code=409, detail="Submission is no longer pending or was not found")
+        reviewable_statuses = ("Pending review", "AI Approved - Awaiting Publish", "AI Rejected")
+        matched = None
+        current_status = None
+        for review_status in reviewable_statuses:
+            candidates = _wix_query_status(review_status, limit=100)
+            matched = next((row for row in candidates if str(row.get("id") or row.get("data", {}).get("_id") or "") == submission_id), None)
+            if matched:
+                current_status = review_status
+                break
+        if not matched or not current_status:
+            raise HTTPException(status_code=409, detail="Submission is no longer reviewable or was not found")
         data = matched.get("data", matched)
         if request.action == "reject":
-            _wix_patch_status(submission_id, "Rejected", "Pending review")
+            _wix_patch_status(submission_id, "Rejected", current_status)
             decision = Decision(decision="reject", risk_score=100, confidence=100,
                                 reasons=[request.reason.strip()], policy_flags=["admin_rejected"])
             _audit(submission_id, decision, status="manual_rejected")
             return {"ok": True, "submission_id": submission_id, "status": "Rejected", "published": False}
         # Reserve the item before creating the public record to prevent concurrent admin approvals.
-        _wix_patch_status(submission_id, "Publishing", "Pending review")
+        _wix_patch_status(submission_id, "Publishing", current_status)
         try:
             public_id = _wix_insert_public_listing(submission_id, data)
             _wix_patch_status(submission_id, "Approved", "Publishing")
         except Exception:
             # Best-effort rollback; never silently claim publication succeeded.
             try:
-                _wix_patch_status(submission_id, "Pending review", "Publishing")
+                _wix_patch_status(submission_id, current_status, "Publishing")
             except Exception:
                 pass
             raise
