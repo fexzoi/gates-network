@@ -25,6 +25,14 @@
 </section>
 <section class="panel"><h2>Audit history</h2><p class="help">Most recent recorded decisions and failures.</p><div class="audit-tools"><input id="filter" placeholder="Filter by submission ID"><button id="refresh" class="btn secondary">Refresh</button></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Submission</th><th>Decision</th><th>Risk / Confidence</th><th>Details</th></tr></thead><tbody id="audit-body"><tr><td colspan="5" style="color:var(--muted)">Connect to load audit history.</td></tr></tbody></table></div><div id="audit-status" class="status"></div></section>
 </div><p class="foot">GTS - GATES NETWORK · Admin API access is bearer-token protected. Use HTTPS only.</p>
+
+<section class="panel" style="margin-top:18px" id="wix-queue-panel">
+<h2>Live seller review queue</h2>
+<p class="help">Read pending submissions from Wix CMS. Approving publishes the listing; rejecting records a decision and reason. AI never auto-publishes.</p>
+<div class="actions" style="margin-bottom:14px"><button id="load-queue" class="btn">Load pending submissions</button><span id="queue-counts" class="pill">Queue not loaded</span></div>
+<div id="queue-status" class="status" role="status"></div>
+<div id="queue-list" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));margin-top:14px"></div>
+</section>
 </main>
 <script>
 (() => {
@@ -107,6 +115,63 @@
     } catch (error) { status.textContent = error.message + " — no approval is assumed."; }
     finally { button.disabled = false; }
   });
+
+  const queueSafe = value => String(value == null ? "" : value);
+  async function loadQueue() {
+    const list = byId("queue-list");
+    list.replaceChildren();
+    byId("queue-status").textContent = "Loading live Wix submissions…";
+    try {
+      const data = await api("/v1/wix/submissions");
+      const c = data.counts || {};
+      byId("queue-counts").textContent = "Pending " + (c.pending || 0) + " · Approved " + (c.approved || 0) + " · Rejected " + (c.rejected || 0);
+      if (!data.items || !data.items.length) {
+        const empty = document.createElement("p"); empty.className = "help"; empty.textContent = "No pending submissions. New seller submissions will appear here."; list.appendChild(empty);
+      }
+      for (const item of data.items || []) {
+        const card = document.createElement("article"); card.className = "panel"; card.style.padding = "16px";
+        const heading = document.createElement("h2"); heading.textContent = item.productName || item.title || "Untitled listing"; card.appendChild(heading);
+        const meta = document.createElement("p"); meta.className = "help"; meta.textContent = [item.title, item.platform, item.category, item.priceText, item.sellerName].filter(Boolean).join(" · "); card.appendChild(meta);
+        const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = item.description || "No description supplied."; card.appendChild(desc);
+        if (item.sellerContactUrl) {
+          const contact = document.createElement("a"); contact.href = item.sellerContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
+        }
+        const id = document.createElement("p"); id.className = "help"; id.textContent = "Submission ID: " + item.id; card.appendChild(id);
+        const reasonLabel = document.createElement("label"); reasonLabel.textContent = "Admin decision reason"; card.appendChild(reasonLabel);
+        const reason = document.createElement("textarea"); reason.maxLength = 1000; reason.required = true; reason.placeholder = "Explain the approval or rejection decision (minimum 3 characters)."; reason.style.minHeight = "70px"; card.appendChild(reason);
+        const actions = document.createElement("div"); actions.className = "actions"; actions.style.marginTop = "12px";
+        const approve = document.createElement("button"); approve.className = "btn"; approve.textContent = "Approve & publish";
+        const reject = document.createElement("button"); reject.className = "btn secondary"; reject.textContent = "Reject";
+        async function decide(action, button) {
+          if (reason.value.trim().length < 3) { byId("queue-status").textContent = "Enter a clear reason before taking action."; reason.focus(); return; }
+          const confirmation = action === "approve"
+            ? window.confirm("Publish this listing to the public GTS marketplace?")
+            : window.confirm("Reject this seller submission?");
+          if (!confirmation) return;
+          approve.disabled = true; reject.disabled = true; byId("queue-status").textContent = "Saving admin decision…";
+          try {
+            const result = await api("/v1/wix/submissions/" + encodeURIComponent(item.id) + "/decision", {
+              method: "POST", body: JSON.stringify({action, reason: reason.value.trim()})
+            });
+            byId("queue-status").textContent = result.published ? "Approved and published successfully." : "Submission rejected. It was not published.";
+            await loadQueue(); await loadAudit();
+          } catch (error) {
+            byId("queue-status").textContent = error.message + " Check the live queue before retrying.";
+            approve.disabled = false; reject.disabled = false;
+          }
+        }
+        approve.addEventListener("click", () => decide("approve", approve));
+        reject.addEventListener("click", () => decide("reject", reject));
+        actions.append(approve, reject); card.appendChild(actions); list.appendChild(card);
+      }
+      byId("queue-status").textContent = "Loaded " + (data.items || []).length + " pending submission(s).";
+    } catch (error) {
+      byId("queue-status").textContent = error.message;
+      const help = document.createElement("p"); help.className = "help"; help.textContent = "If Wix access is disabled, configure the server-side Wix credentials and enable the admin workflow only after checking the collection permissions."; list.appendChild(help);
+    }
+  }
+  byId("load-queue").addEventListener("click", loadQueue);
+
 })();
 </script>
 </body></html>
