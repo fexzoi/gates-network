@@ -142,3 +142,53 @@ def test_admin_decision_reason_validation():
     response = client.post("/v1/wix/submissions/submission-123/decision",
                            json={"action":"reject","reason":"x"}, headers=HEADERS)
     assert response.status_code == 422
+
+
+def test_admin_approval_publishes_only_after_explicit_human_decision(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", True)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    monkeypatch.setattr(moderation_app, "_wix_query_status", lambda status, limit=100: [
+        {"id": "submission-123", "data": {
+            "title": "Digital design service", "productName": "Design pack",
+            "platform": "Other", "category": "services", "description": "Design work",
+            "priceText": "₹500", "sellerName": "Seller", "sellerContactUrl": "https://example.com"
+        }}
+    ] if status == "Pending review" else [])
+    transitions = []
+    monkeypatch.setattr(moderation_app, "_wix_patch_status",
+                        lambda item_id, status, expected_status: transitions.append((item_id, status, expected_status)))
+    monkeypatch.setattr(moderation_app, "_wix_insert_public_listing", lambda submission_id, data: "public-listing-123")
+    result = moderation_app.admin_decide_submission(
+        "submission-123",
+        moderation_app.AdminDecisionRequest(action="approve", reason="Reviewed details and seller contact.")
+    )
+    assert result["published"] is True
+    assert result["status"] == "Approved"
+    assert transitions == [
+        ("submission-123", "Publishing", "Pending review"),
+        ("submission-123", "Approved", "Publishing"),
+    ]
+    audit = client.get("/v1/audit", headers=HEADERS, params={"submission_id": "submission-123"})
+    assert audit.status_code == 200
+    assert audit.json()["items"][0]["status"] == "manual_approved_published"
+
+
+def test_admin_rejection_never_publishes(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", True)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    monkeypatch.setattr(moderation_app, "_wix_query_status", lambda status, limit=100: [
+        {"id": "submission-reject-123", "data": {"title": "Unsafe listing"}}
+    ] if status == "Pending review" else [])
+    transitions = []
+    monkeypatch.setattr(moderation_app, "_wix_patch_status",
+                        lambda item_id, status, expected_status: transitions.append((item_id, status, expected_status)))
+    monkeypatch.setattr(moderation_app, "_wix_insert_public_listing",
+                        lambda *args: (_ for _ in ()).throw(AssertionError("Rejected listings must never publish")))
+    result = moderation_app.admin_decide_submission(
+        "submission-reject-123",
+        moderation_app.AdminDecisionRequest(action="reject", reason="The listing violates marketplace rules.")
+    )
+    assert result["published"] is False
+    assert transitions == [("submission-reject-123", "Rejected", "Pending review")]
