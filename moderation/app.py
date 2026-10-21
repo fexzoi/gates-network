@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, HttpUrl, ValidationError
 app = FastAPI(
     title="GTS - GATES NETWORK AI Moderation",
     version="0.1.0",
-    description="AI listing decisions and audit logging. Publishing is deliberately disabled.",
+    description="GTS listing moderation and authenticated human review workflow.",
 )
 
 DEFAULT_DB_PATH = "/data/moderation_audit.sqlite3" if Path("/data").is_dir() else "./moderation_audit.sqlite3"
@@ -181,7 +181,7 @@ def moderation_dashboard() -> HTMLResponse:
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "service": "gts-ai-moderation", "publishing_enabled": False}
+    return {"ok": True, "service": "gts-ai-moderation", "publishing_enabled": bool(WIX_AUTOMATION_ENABLED and WIX_API_KEY and WIX_SITE_ID)}
 
 @app.post("/v1/moderate", response_model=ModerationResult, dependencies=[Depends(_auth)])
 def moderate_listing(listing: ListingSubmission) -> ModerationResult:
@@ -394,7 +394,7 @@ def _wix_query_status(status: str, limit: int = 100) -> list[dict]:
         headers=_wix_headers(),
         json={"dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
               "query": {"filter": {"status": status}, "paging": {"limit": limit, "offset": 0},
-                        "sort": [{"fieldName": "_createdDate", "order": "DESC"}]}},
+                        }},
         timeout=20.0,
     )
     response.raise_for_status()
@@ -415,13 +415,10 @@ def _wix_patch_status(item_id: str, status: str, expected_status: str) -> None:
         timeout=20.0,
     )
     response.raise_for_status()
-    payload = response.json()
-    item = payload.get("dataItem", {})
-    if not item:
-        # Some Wix responses omit the item; verify the state through a fresh query.
-        rows = _wix_query_status(status, limit=100)
-        if not any((r.get("id") or r.get("data", {}).get("_id")) == item_id for r in rows):
-            raise RuntimeError("wix_conditional_status_transition_not_confirmed")
+    # Always verify the conditional transition; HTTP 200 alone is not proof the filter matched.
+    rows = _wix_query_status(status, limit=100)
+    if not any(str(r.get("id") or r.get("data", {}).get("_id") or "") == item_id for r in rows):
+        raise RuntimeError("wix_conditional_status_transition_not_confirmed")
 
 def _wix_insert_public_listing(submission_id: str, data: dict) -> str:
     # Stable ID makes retries idempotent if publication succeeds but the status update fails.
@@ -439,7 +436,7 @@ def _wix_insert_public_listing(submission_id: str, data: dict) -> str:
         "priceText": str(data.get("priceText") or "")[:120],
         "sellerName": str(data.get("sellerName") or "")[:120],
         "sellerContactUrl": str(data.get("sellerContactUrl") or ""),
-        "status": "Approved",
+        "status": "active",
         "featured": False,
     }
     response = httpx.post(
