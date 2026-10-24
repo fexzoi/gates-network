@@ -171,6 +171,63 @@ def moderate_with_openai(listing: ListingSubmission) -> Decision:
     decision = Decision.model_validate(parsed)
     return decision
 
+
+class SupportMessage(BaseModel):
+    message: str = Field(min_length=3, max_length=2000)
+    session_id: str = Field(default="anonymous", min_length=1, max_length=100)
+
+@app.post("/v1/support")
+def support_assistant(request: SupportMessage) -> dict:
+    """Answer a marketplace support question and persist a support request."""
+    message = request.message.strip()
+    if len(message) < 3:
+        raise HTTPException(status_code=422, detail="Please enter a little more detail.")
+    ticket_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat()
+    answer = (
+        "Thanks for contacting GTS Support. I can help with listings, seller reviews, marketplace navigation, and account safety. "
+        "For account-specific issues or payment disputes, a human team member must review the case. "
+        "Never share passwords, wallet seed phrases, verification codes, or API keys."
+    )
+    status = "fallback"
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if api_key:
+        try:
+            from openai import OpenAI
+            response = OpenAI(api_key=api_key, timeout=15.0, max_retries=0).responses.create(
+                model=MODEL,
+                instructions=(
+                    "You are GTS - GATES NETWORK marketplace support. Give concise, practical help about listing submissions, "
+                    "review status, marketplace navigation, and safety. Never claim you changed an account, approved a listing, "
+                    "issued a refund, or contacted staff. Never request passwords, wallet seed phrases, one-time codes, or secrets. "
+                    "Refer account-specific issues and payment disputes to human support."
+                ),
+                input=message,
+            )
+            candidate = (response.output_text or "").strip()
+            if candidate:
+                answer = candidate[:4000]
+                status = "ai_answered"
+        except Exception:
+            # Keep support available without leaking provider errors or credentials.
+            status = "fallback"
+    with _db() as connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS support_requests (
+                ticket_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                message TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        connection.execute(
+            "INSERT INTO support_requests (ticket_id, session_id, message, answer, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (ticket_id, request.session_id[:100], message, answer, status, created_at),
+        )
+    return {"ticket_id": ticket_id, "answer": answer, "status": status, "created_at": created_at}
+
 @app.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
 def moderation_dashboard() -> HTMLResponse:
     """Serve the same-origin admin UI; credentials are entered by the operator and kept in page memory only."""
