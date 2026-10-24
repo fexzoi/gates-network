@@ -87,6 +87,11 @@ def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
     class FakeResponse:
         def raise_for_status(self):
             return None
+        def json(self):
+            return {"dataItem": {
+                "id": "submission-123",
+                "data": {"status": "AI Rejected", "_id": "submission-123"}
+            }}
 
     def fake_patch(url, *, headers, json, timeout):
         captured.update({"url": url, "headers": headers, "json": json, "timeout": timeout})
@@ -100,7 +105,22 @@ def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
     assert captured["url"].endswith("/wix-data/v2/items/submission-123")
     assert captured["json"]["patch"]["fieldModifications"][0]["fieldPath"] == "status"
     assert captured["json"]["patch"]["fieldModifications"][0]["setFieldOptions"]["value"] == "AI Rejected"
+
     assert captured["json"]["condition"]["filter"] == {"status": "Pending review"}
+
+
+def test_wix_status_patch_fails_if_response_does_not_confirm_transition(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"dataItem": {"id": "submission-123", "data": {"status": "Pending review"}}}
+
+    monkeypatch.setattr(moderation_app.httpx, "patch", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    with pytest.raises(RuntimeError, match="wix_conditional_status_transition_not_confirmed"):
+        moderation_app._wix_patch_status("submission-123", "Rejected", "Pending review")
 
 
 def test_contact_url_validation_rejects_non_http_and_malformed_urls():
