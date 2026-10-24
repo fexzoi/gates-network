@@ -714,14 +714,30 @@
             alert('Trusted middleman successfully registered.');
         }
 
-        function submitSupportTicket() {
-            const val = document.getElementById('supportInput').value.trim();
-            if (!val) {
-                alert('Please enter your inquiry.');
+        async function submitSupportTicket() {
+            const input = document.getElementById('supportInput');
+            const val = input.value.trim();
+            if (val.length < 3) {
+                alert('Please enter a little more detail.');
                 return;
             }
-            alert('Support ticket logged. Our team will contact you via Telegram.');
-            document.getElementById('supportInput').value = '';
+            const button = document.querySelector('[onclick="submitSupportTicket()"]');
+            if (button) { button.disabled = true; button.textContent = 'Sending...'; }
+            try {
+                const response = await fetch('https://gts-ai-moderation-production.up.railway.app/v1/support', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: val, session_id: currentUserHandle || 'anonymous' })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.detail || 'Support is temporarily unavailable.');
+                alert('GTS Support: ' + data.answer + '\n\nTicket reference: ' + data.ticket_id);
+                input.value = '';
+            } catch (error) {
+                alert('Could not send your request right now. Please try again later.');
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Submit Ticket'; }
+            }
         }
 
         function closeModal(id) {
