@@ -156,6 +156,9 @@ def test_dashboard_is_served_without_caching():
     assert "Moderation Console" in response.text
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-frame-options"] == "DENY"
+    assert "function safeHttpUrl(value)" in response.text
+    assert "contact.href = safeContactUrl" in response.text
+    assert "contact.href = item.sellerContactUrl" not in response.text
 
 
 def test_admin_queue_requires_authentication():
