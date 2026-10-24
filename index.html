@@ -474,8 +474,12 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="listProductName" class="input-field" placeholder="e.g. Premium Telegram Username" maxlength="100">
+            </div>
+            <div class="form-group">
                 <label>Username Handle</label>
-                <input type="text" id="listHandle" class="input-field" placeholder="@handle">
+                <input type="text" id="listHandle" class="input-field" placeholder="@handle" maxlength="100">
             </div>
             <div class="form-group">
                 <label>Accepted Currency</label>
@@ -641,17 +645,20 @@
 
         function submitListing() {
             const category = document.getElementById('listCategory').value;
+            const productName = document.getElementById('listProductName').value.trim();
             const handle = document.getElementById('listHandle').value.trim();
             const currency = document.getElementById('listCurrency').value;
             const price = document.getElementById('listPrice').value.trim();
+            const numericPrice = Number(price);
 
-            if (!handle || !price) {
-                alert('Please complete all fields.');
+            if (!productName || !handle || !price || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+                alert('Enter a product name, username handle, and a valid price greater than zero.');
                 return;
             }
 
             const newItem = {
                 id: Date.now(),
+                productName: productName.slice(0, 100),
                 category: category,
                 handle: handle.startsWith('@') ? handle : '@' + handle,
                 owner: currentUserHandle,
@@ -736,7 +743,8 @@
                 el.innerHTML = `
                     <div>
                         <div class="tag">${item.category}</div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${item.handle}</h3>
+                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${item.productName || item.handle}</h3>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: var(--text-muted);">${item.handle}</p>
                         <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Seller: ${item.owner}</p>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">
