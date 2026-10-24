@@ -263,3 +263,36 @@ def test_wix_query_status_reads_all_pages(monkeypatch):
 
     assert [item["id"] for item in items] == ["submission-1", "submission-2", "submission-3"]
     assert requests == [0, 2]
+
+def test_admin_approval_rolls_back_when_publication_cannot_be_confirmed(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", True)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    monkeypatch.setattr(moderation_app, "_wix_query_status", lambda status, limit=100: [
+        {"id": "submission-fail-123", "data": {
+            "title": "Example listing", "productName": "Example",
+            "platform": "Other", "category": "services", "description": "Example description",
+            "priceText": "₹100", "sellerName": "Seller", "sellerContactUrl": "https://example.com"
+        }}
+    ] if status == "Pending review" else [])
+    transitions = []
+    def record_transition(item_id, status, expected_status):
+        transitions.append((item_id, status, expected_status))
+    monkeypatch.setattr(moderation_app, "_wix_patch_status", record_transition)
+    monkeypatch.setattr(moderation_app, "_wix_insert_public_listing",
+                        lambda *args: (_ for _ in ()).throw(RuntimeError("simulated Wix publish failure")))
+
+    with pytest.raises(moderation_app.HTTPException) as exc:
+        moderation_app.admin_decide_submission(
+            "submission-fail-123",
+            moderation_app.AdminDecisionRequest(action="approve", reason="Reviewed listing and contact details.")
+        )
+    assert exc.value.status_code == 502
+    assert transitions == [
+        ("submission-fail-123", "Publishing", "Pending review"),
+        ("submission-fail-123", "Pending review", "Publishing"),
+    ]
+    audit = client.get("/v1/audit", headers=HEADERS, params={"submission_id": "submission-fail-123"})
+    assert audit.status_code == 200
+    assert audit.json()["items"][0]["status"] == "admin_action_error"
+
