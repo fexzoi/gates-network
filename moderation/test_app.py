@@ -26,6 +26,23 @@ def isolated_audit_database(tmp_path, monkeypatch):
     monkeypatch.setattr(moderation_app, "DB_PATH", str(tmp_path / "audit.sqlite3"))
 
 
+
+def test_support_request_is_saved_and_returns_reference(monkeypatch):
+    response = client.post("/v1/support", json={"message": "How do I check my listing review?", "session_id": "test-user"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ticket_id"]
+    assert "GTS Support" not in payload["answer"] or len(payload["answer"]) > 20
+    with moderation_app._db() as connection:
+        row = connection.execute("SELECT message, session_id, status FROM support_requests WHERE ticket_id = ?", (payload["ticket_id"],)).fetchone()
+    assert row["message"] == "How do I check my listing review?"
+    assert row["session_id"] == "test-user"
+    assert row["status"] in {"fallback", "ai_answered"}
+
+def test_support_rejects_too_short_message():
+    response = client.post("/v1/support", json={"message": "x"})
+    assert response.status_code == 422
+
 def test_health_discloses_publishing_is_disabled():
     response = client.get("/health")
     assert response.status_code == 200
