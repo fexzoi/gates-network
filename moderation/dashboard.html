@@ -158,8 +158,12 @@
             const result = await api("/v1/wix/submissions/" + encodeURIComponent(item.id) + "/decision", {
               method: "POST", body: JSON.stringify({action, reason: reason.value.trim()})
             });
-            byId("queue-status").textContent = result.published ? "Approved and published successfully." : "Submission rejected. It was not published.";
+            const successMessage = result.published
+              ? "Approved and published successfully."
+              : "Submission rejected. It was not published.";
             await loadQueue(); await loadAudit();
+            // Refresh functions update their own status text; restore the decision result afterward.
+            byId("queue-status").textContent = successMessage;
           } catch (error) {
             byId("queue-status").textContent = error.message + " Check the live queue before retrying.";
             approve.disabled = false; reject.disabled = false;
