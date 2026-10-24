@@ -26,6 +26,23 @@ def isolated_audit_database(tmp_path, monkeypatch):
     monkeypatch.setattr(moderation_app, "DB_PATH", str(tmp_path / "audit.sqlite3"))
 
 
+
+def test_support_request_is_saved_and_returns_reference(monkeypatch):
+    response = client.post("/v1/support", json={"message": "How do I check my listing review?", "session_id": "test-user"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ticket_id"]
+    assert "GTS Support" not in payload["answer"] or len(payload["answer"]) > 20
+    with moderation_app._db() as connection:
+        row = connection.execute("SELECT message, session_id, status FROM support_requests WHERE ticket_id = ?", (payload["ticket_id"],)).fetchone()
+    assert row["message"] == "How do I check my listing review?"
+    assert row["session_id"] == "test-user"
+    assert row["status"] in {"fallback", "ai_answered"}
+
+def test_support_rejects_too_short_message():
+    response = client.post("/v1/support", json={"message": "x"})
+    assert response.status_code == 422
+
 def test_health_discloses_publishing_is_disabled():
     response = client.get("/health")
     assert response.status_code == 200
@@ -87,6 +104,11 @@ def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
     class FakeResponse:
         def raise_for_status(self):
             return None
+        def json(self):
+            return {"dataItem": {
+                "id": "submission-123",
+                "data": {"status": "AI Rejected", "_id": "submission-123"}
+            }}
 
     def fake_patch(url, *, headers, json, timeout):
         captured.update({"url": url, "headers": headers, "json": json, "timeout": timeout})
@@ -100,7 +122,22 @@ def test_wix_status_patch_is_conditional_and_partial(monkeypatch):
     assert captured["url"].endswith("/wix-data/v2/items/submission-123")
     assert captured["json"]["patch"]["fieldModifications"][0]["fieldPath"] == "status"
     assert captured["json"]["patch"]["fieldModifications"][0]["setFieldOptions"]["value"] == "AI Rejected"
+
     assert captured["json"]["condition"]["filter"] == {"status": "Pending review"}
+
+
+def test_wix_status_patch_fails_if_response_does_not_confirm_transition(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+        def json(self):
+            return {"dataItem": {"id": "submission-123", "data": {"status": "Pending review"}}}
+
+    monkeypatch.setattr(moderation_app.httpx, "patch", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    with pytest.raises(RuntimeError, match="wix_conditional_status_transition_not_confirmed"):
+        moderation_app._wix_patch_status("submission-123", "Rejected", "Pending review")
 
 
 def test_contact_url_validation_rejects_non_http_and_malformed_urls():
@@ -119,6 +156,9 @@ def test_dashboard_is_served_without_caching():
     assert "Moderation Console" in response.text
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-frame-options"] == "DENY"
+    assert "function safeHttpUrl(value)" in response.text
+    assert "contact.href = safeContactUrl" in response.text
+    assert "contact.href = item.sellerContactUrl" not in response.text
 
 
 def test_admin_queue_requires_authentication():
@@ -192,3 +232,67 @@ def test_admin_rejection_never_publishes(monkeypatch):
     )
     assert result["published"] is False
     assert transitions == [("submission-reject-123", "Rejected", "Pending review")]
+
+
+def test_wix_query_status_reads_all_pages(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    requests = []
+
+    class FakeResponse:
+        def __init__(self, items):
+            self._items = items
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"dataItems": self._items}
+
+    pages = {
+        0: [{"id": "submission-1"}, {"id": "submission-2"}],
+        2: [{"id": "submission-3"}],
+    }
+
+    def fake_post(url, headers, json=None, timeout=None):
+        requests.append(json["query"]["paging"]["offset"])
+        return FakeResponse(pages.get(json["query"]["paging"]["offset"], []))
+
+    monkeypatch.setattr(moderation_app.httpx, "post", fake_post)
+    items = moderation_app._wix_query_status("Pending review", limit=2)
+
+    assert [item["id"] for item in items] == ["submission-1", "submission-2", "submission-3"]
+    assert requests == [0, 2]
+
+def test_admin_approval_rolls_back_when_publication_cannot_be_confirmed(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", True)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    monkeypatch.setattr(moderation_app, "_wix_query_status", lambda status, limit=100: [
+        {"id": "submission-fail-123", "data": {
+            "title": "Example listing", "productName": "Example",
+            "platform": "Other", "category": "services", "description": "Example description",
+            "priceText": "₹100", "sellerName": "Seller", "sellerContactUrl": "https://example.com"
+        }}
+    ] if status == "Pending review" else [])
+    transitions = []
+    def record_transition(item_id, status, expected_status):
+        transitions.append((item_id, status, expected_status))
+    monkeypatch.setattr(moderation_app, "_wix_patch_status", record_transition)
+    monkeypatch.setattr(moderation_app, "_wix_insert_public_listing",
+                        lambda *args: (_ for _ in ()).throw(RuntimeError("simulated Wix publish failure")))
+
+    with pytest.raises(moderation_app.HTTPException) as exc:
+        moderation_app.admin_decide_submission(
+            "submission-fail-123",
+            moderation_app.AdminDecisionRequest(action="approve", reason="Reviewed listing and contact details.")
+        )
+    assert exc.value.status_code == 502
+    assert transitions == [
+        ("submission-fail-123", "Publishing", "Pending review"),
+        ("submission-fail-123", "Pending review", "Publishing"),
+    ]
+    audit = client.get("/v1/audit", headers=HEADERS, params={"submission_id": "submission-fail-123"})
+    assert audit.status_code == 200
+    assert audit.json()["items"][0]["status"] == "admin_action_error"
+

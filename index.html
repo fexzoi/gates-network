@@ -474,8 +474,12 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="listProductName" class="input-field" placeholder="e.g. Premium Telegram Username" maxlength="100">
+            </div>
+            <div class="form-group">
                 <label>Username Handle</label>
-                <input type="text" id="listHandle" class="input-field" placeholder="@handle">
+                <input type="text" id="listHandle" class="input-field" placeholder="@handle" maxlength="100">
             </div>
             <div class="form-group">
                 <label>Accepted Currency</label>
@@ -641,17 +645,20 @@
 
         function submitListing() {
             const category = document.getElementById('listCategory').value;
+            const productName = document.getElementById('listProductName').value.trim();
             const handle = document.getElementById('listHandle').value.trim();
             const currency = document.getElementById('listCurrency').value;
             const price = document.getElementById('listPrice').value.trim();
+            const numericPrice = Number(price);
 
-            if (!handle || !price) {
-                alert('Please complete all fields.');
+            if (!productName || !handle || !price || !Number.isFinite(numericPrice) || numericPrice <= 0) {
+                alert('Enter a product name, username handle, and a valid price greater than zero.');
                 return;
             }
 
             const newItem = {
                 id: Date.now(),
+                productName: productName.slice(0, 100),
                 category: category,
                 handle: handle.startsWith('@') ? handle : '@' + handle,
                 owner: currentUserHandle,
@@ -690,12 +697,10 @@
         }
 
         function openAdminAuth() {
-            const pass = prompt('Enter Admin Passkey:');
-            if (pass === 'xeno123' || pass === 'admin') {
-                document.getElementById('adminModal').style.display = 'flex';
-            } else if (pass) {
-                alert('Incorrect passkey.');
-            }
+            // Never protect privileged actions with a passkey embedded in public frontend code.
+            // Send admins to the server-side console, which requires the API bearer token.
+            const adminConsole = 'https://gts-ai-moderation-production.up.railway.app/dashboard';
+            window.open(adminConsole, '_blank', 'noopener,noreferrer');
         }
 
         function saveMiddleman() {
@@ -709,14 +714,30 @@
             alert('Trusted middleman successfully registered.');
         }
 
-        function submitSupportTicket() {
-            const val = document.getElementById('supportInput').value.trim();
-            if (!val) {
-                alert('Please enter your inquiry.');
+        async function submitSupportTicket() {
+            const input = document.getElementById('supportInput');
+            const val = input.value.trim();
+            if (val.length < 3) {
+                alert('Please enter a little more detail.');
                 return;
             }
-            alert('Support ticket logged. Our team will contact you via Telegram.');
-            document.getElementById('supportInput').value = '';
+            const button = document.querySelector('[onclick="submitSupportTicket()"]');
+            if (button) { button.disabled = true; button.textContent = 'Sending...'; }
+            try {
+                const response = await fetch('https://gts-ai-moderation-production.up.railway.app/v1/support', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: val, session_id: currentUserHandle || 'anonymous' })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.detail || 'Support is temporarily unavailable.');
+                alert('GTS Support: ' + data.answer + '\n\nTicket reference: ' + data.ticket_id);
+                input.value = '';
+            } catch (error) {
+                alert('Could not send your request right now. Please try again later.');
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Submit Ticket'; }
+            }
         }
 
         function closeModal(id) {
@@ -738,7 +759,8 @@
                 el.innerHTML = `
                     <div>
                         <div class="tag">${item.category}</div>
-                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${item.handle}</h3>
+                        <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #fff;">${item.productName || item.handle}</h3>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: var(--text-muted);">${item.handle}</p>
                         <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Seller: ${item.owner}</p>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">

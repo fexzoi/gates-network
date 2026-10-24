@@ -11,7 +11,7 @@
 <body><main>
 <header class="top"><div><div class="brand">GTS — GATES NETWORK</div><h1 style="font-size:28px;letter-spacing:-.04em;margin:5px 0 0">Moderation Console</h1><div class="sub">Private admin tools · human approval required</div></div><span class="pill">STAGING / MANUAL REVIEW</span></header>
 <div class="notice">Security boundary: only authenticated admins can load the Wix review queue. Approve & publish creates a public listing; reject records a reason and changes the private submission status. AI never auto-publishes. Keep your bearer token private; it remains in this page's memory and is not saved to browser storage.</div>
-<section class="panel" style="margin-bottom:18px"><h2>API access</h2><p class="help">Enter the server's MODERATION_API_TOKEN to load the review queue and audit records.</p><div class="row"><div class="field" style="margin:0"><label for="token">Bearer token</label><input id="token" type="password" autocomplete="off" placeholder="Paste moderation API token"></div><div style="display:flex;align-items:end;gap:9px;flex-wrap:wrap"><button id="connect" class="btn">Load audit log</button><button id="clear" class="btn secondary">Clear token</button></div></div><div id="connection" class="status" role="status">Not connected.</div></section>
+<section class="panel" style="margin-bottom:18px"><h2>API access</h2><p class="help">Enter the server's MODERATION_API_TOKEN to load the review queue and audit records.</p><div class="row"><div class="field" style="margin:0"><label for="token">Bearer token</label><input id="token" type="password" autocomplete="off" placeholder="Paste moderation API token"></div><div style="display:flex;align-items:end;gap:9px;flex-wrap:wrap"><button id="connect" class="btn">Connect & load admin dashboard</button><button id="clear" class="btn secondary">Clear token</button></div></div><div id="connection" class="status" role="status">Not connected.</div></section>
 <div class="grid">
 <section class="panel"><h2>Review a listing</h2><p class="help">Each submission may call the configured OpenAI model and create an audit record.</p>
 <form id="moderate-form">
@@ -80,12 +80,17 @@
     token = byId("token").value.trim();
     byId("connection").textContent = token ? "Checking credentials…" : "Enter a bearer token.";
     if (!token) return;
-    try { await api("/v1/audit?limit=1"); await loadAudit(); byId("connection").textContent = "Connected for this page session."; }
+    try { await api("/v1/audit?limit=1"); byId("connection").textContent = "Connected. Loading admin data…"; await Promise.all([loadAudit(), loadQueue()]); byId("connection").textContent = "Connected. Admin data loaded for this page session."; }
     catch (error) { byId("connection").textContent = error.message; }
   });
   byId("clear").addEventListener("click", () => {
     token = ""; byId("token").value = ""; byId("connection").textContent = "Token cleared from page memory.";
     byId("audit-body").replaceChildren(); byId("audit-status").textContent = "";
+    byId("queue-list").replaceChildren();
+    byId("queue-counts").textContent = "Queue not loaded";
+    byId("queue-status").textContent = "Connect again to view seller submissions.";
+    byId("review-status").textContent = "";
+    byId("result").replaceChildren(); byId("result").style.display = "none";
   });
   byId("refresh").addEventListener("click", loadAudit);
   byId("filter").addEventListener("keydown", event => { if (event.key === "Enter") loadAudit(); });
@@ -117,6 +122,12 @@
   });
 
   const queueSafe = value => String(value == null ? "" : value);
+  function safeHttpUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    } catch (_) { return ""; }
+  }
   async function loadQueue() {
     const list = byId("queue-list");
     list.replaceChildren();
@@ -131,10 +142,16 @@
       for (const item of data.items || []) {
         const card = document.createElement("article"); card.className = "panel"; card.style.padding = "16px";
         const heading = document.createElement("h2"); heading.textContent = item.productName || item.title || "Untitled listing"; card.appendChild(heading);
-        const meta = document.createElement("p"); meta.className = "help"; meta.textContent = [item.status, item.title, item.platform, item.category, item.priceText, item.sellerName].filter(Boolean).join(" · "); card.appendChild(meta);
+        const meta = document.createElement("p"); meta.className = "help";
+        const submittedLabel = item.submittedAt ? "Submitted " + safe(item.submittedAt).replace("T", " ").slice(0, 16) : "";
+        meta.textContent = [item.status, item.platform, item.category, item.priceText, item.sellerName, submittedLabel].filter(Boolean).join(" · ");
+        card.appendChild(meta);
         const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = item.description || "No description supplied."; card.appendChild(desc);
-        if (item.sellerContactUrl) {
-          const contact = document.createElement("a"); contact.href = item.sellerContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
+        const safeContactUrl = safeHttpUrl(item.sellerContactUrl);
+        if (safeContactUrl) {
+          const contact = document.createElement("a"); contact.href = safeContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.referrerPolicy = "no-referrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
+        } else if (item.sellerContactUrl) {
+          const invalidContact = document.createElement("p"); invalidContact.className = "help"; invalidContact.textContent = "Seller contact link is invalid and has been hidden."; card.appendChild(invalidContact);
         }
         const id = document.createElement("p"); id.className = "help"; id.textContent = "Submission ID: " + item.id; card.appendChild(id);
         const reasonLabel = document.createElement("label"); reasonLabel.textContent = "Admin decision reason"; card.appendChild(reasonLabel);
@@ -153,8 +170,12 @@
             const result = await api("/v1/wix/submissions/" + encodeURIComponent(item.id) + "/decision", {
               method: "POST", body: JSON.stringify({action, reason: reason.value.trim()})
             });
-            byId("queue-status").textContent = result.published ? "Approved and published successfully." : "Submission rejected. It was not published.";
+            const successMessage = result.published
+              ? "Approved and published successfully."
+              : "Submission rejected. It was not published.";
             await loadQueue(); await loadAudit();
+            // Refresh functions update their own status text; restore the decision result afterward.
+            byId("queue-status").textContent = successMessage;
           } catch (error) {
             byId("queue-status").textContent = error.message + " Check the live queue before retrying.";
             approve.disabled = false; reject.disabled = false;
