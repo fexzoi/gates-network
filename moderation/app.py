@@ -415,9 +415,15 @@ def _wix_patch_status(item_id: str, status: str, expected_status: str) -> None:
         timeout=20.0,
     )
     response.raise_for_status()
-    # Always verify the conditional transition; HTTP 200 alone is not proof the filter matched.
-    rows = _wix_query_status(status, limit=100)
-    if not any(str(r.get("id") or r.get("data", {}).get("_id") or "") == item_id for r in rows):
+    # Wix Patch Data Item returns the patched item. Verify that exact response
+    # instead of searching only the first 100 rows for the new status; otherwise
+    # a valid transition can be falsely reported as failed when the queue is large.
+    payload = response.json()
+    patched = payload.get("dataItem") or {}
+    patched_data = patched.get("data") or {}
+    returned_id = str(patched.get("id") or patched_data.get("_id") or "")
+    returned_status = patched_data.get("status")
+    if returned_id != item_id or returned_status != status:
         raise RuntimeError("wix_conditional_status_transition_not_confirmed")
 
 def _wix_insert_public_listing(submission_id: str, data: dict) -> str:
