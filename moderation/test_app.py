@@ -212,3 +212,34 @@ def test_admin_rejection_never_publishes(monkeypatch):
     )
     assert result["published"] is False
     assert transitions == [("submission-reject-123", "Rejected", "Pending review")]
+
+
+def test_wix_query_status_reads_all_pages(monkeypatch):
+    import json
+
+    requests = []
+
+    class FakeResponse:
+        def __init__(self, items):
+            self._items = items
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"dataItems": self._items}
+
+    pages = {
+        0: [{"id": "submission-1"}, {"id": "submission-2"}],
+        2: [{"id": "submission-3"}],
+    }
+
+    def fake_post(url, headers, json=None, timeout=None):
+        requests.append(json["query"]["paging"]["offset"])
+        return FakeResponse(pages.get(json["query"]["paging"]["offset"], []))
+
+    monkeypatch.setattr(moderation_app.httpx, "post", fake_post)
+    items = moderation_app._wix_query_status("Pending review", limit=2)
+
+    assert [item["id"] for item in items] == ["submission-1", "submission-2", "submission-3"]
+    assert requests == [0, 2]
