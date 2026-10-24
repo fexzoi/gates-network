@@ -11,7 +11,7 @@
 <body><main>
 <header class="top"><div><div class="brand">GTS — GATES NETWORK</div><h1 style="font-size:28px;letter-spacing:-.04em;margin:5px 0 0">Moderation Console</h1><div class="sub">Private admin tools · human approval required</div></div><span class="pill">STAGING / MANUAL REVIEW</span></header>
 <div class="notice">Security boundary: only authenticated admins can load the Wix review queue. Approve & publish creates a public listing; reject records a reason and changes the private submission status. AI never auto-publishes. Keep your bearer token private; it remains in this page's memory and is not saved to browser storage.</div>
-<section class="panel" style="margin-bottom:18px"><h2>API access</h2><p class="help">Enter the server's MODERATION_API_TOKEN to load the review queue and audit records.</p><div class="row"><div class="field" style="margin:0"><label for="token">Bearer token</label><input id="token" type="password" autocomplete="off" placeholder="Paste moderation API token"></div><div style="display:flex;align-items:end;gap:9px;flex-wrap:wrap"><button id="connect" class="btn">Load audit log</button><button id="clear" class="btn secondary">Clear token</button></div></div><div id="connection" class="status" role="status">Not connected.</div></section>
+<section class="panel" style="margin-bottom:18px"><h2>API access</h2><p class="help">Enter the server's MODERATION_API_TOKEN to load the review queue and audit records.</p><div class="row"><div class="field" style="margin:0"><label for="token">Bearer token</label><input id="token" type="password" autocomplete="off" placeholder="Paste moderation API token"></div><div style="display:flex;align-items:end;gap:9px;flex-wrap:wrap"><button id="connect" class="btn">Connect & load admin dashboard</button><button id="clear" class="btn secondary">Clear token</button></div></div><div id="connection" class="status" role="status">Not connected.</div></section>
 <div class="grid">
 <section class="panel"><h2>Review a listing</h2><p class="help">Each submission may call the configured OpenAI model and create an audit record.</p>
 <form id="moderate-form">
@@ -80,7 +80,7 @@
     token = byId("token").value.trim();
     byId("connection").textContent = token ? "Checking credentials…" : "Enter a bearer token.";
     if (!token) return;
-    try { await api("/v1/audit?limit=1"); await loadAudit(); byId("connection").textContent = "Connected for this page session."; }
+    try { await api("/v1/audit?limit=1"); byId("connection").textContent = "Connected. Loading admin data…"; await Promise.all([loadAudit(), loadQueue()]); byId("connection").textContent = "Connected. Admin data loaded for this page session."; }
     catch (error) { byId("connection").textContent = error.message; }
   });
   byId("clear").addEventListener("click", () => {
