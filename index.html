@@ -690,12 +690,10 @@
         }
 
         function openAdminAuth() {
-            const pass = prompt('Enter Admin Passkey:');
-            if (pass === 'xeno123' || pass === 'admin') {
-                document.getElementById('adminModal').style.display = 'flex';
-            } else if (pass) {
-                alert('Incorrect passkey.');
-            }
+            // Never protect privileged actions with a passkey embedded in public frontend code.
+            // Send admins to the server-side console, which requires the API bearer token.
+            const adminConsole = 'https://gts-ai-moderation-production.up.railway.app/dashboard';
+            window.open(adminConsole, '_blank', 'noopener,noreferrer');
         }
 
         function saveMiddleman() {
