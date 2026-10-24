@@ -389,17 +389,31 @@ def _require_wix_admin() -> None:
         raise HTTPException(status_code=503, detail="Wix CMS server credentials are not configured")
 
 def _wix_query_status(status: str, limit: int = 100) -> list[dict]:
-    response = httpx.post(
-        f"{WIX_API_BASE}/wix-data/v2/items/query",
-        headers=_wix_headers(),
-        json={"dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
-              "query": {"filter": {"status": status}, "paging": {"limit": limit, "offset": 0},
-                        }},
-        timeout=20.0,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    return payload.get("dataItems", payload.get("items", []))
+    """Fetch every page for a status so admin decisions never miss older queue items."""
+    page_size = max(1, min(int(limit), 100))
+    offset = 0
+    items: list[dict] = []
+    while True:
+        response = httpx.post(
+            f"{WIX_API_BASE}/wix-data/v2/items/query",
+            headers=_wix_headers(),
+            json={
+                "dataCollectionId": WIX_SUBMISSIONS_COLLECTION_ID,
+                "query": {"filter": {"status": status},
+                          "paging": {"limit": page_size, "offset": offset}},
+            },
+            timeout=20.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        page = payload.get("dataItems", payload.get("items", []))
+        if not isinstance(page, list):
+            raise RuntimeError("wix_query_response_items_invalid")
+        items.extend(page)
+        if len(page) < page_size:
+            break
+        offset += len(page)
+    return items
 
 def _wix_patch_status(item_id: str, status: str, expected_status: str) -> None:
     response = httpx.patch(
