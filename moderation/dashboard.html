@@ -122,6 +122,12 @@
   });
 
   const queueSafe = value => String(value == null ? "" : value);
+  function safeHttpUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    } catch (_) { return ""; }
+  }
   async function loadQueue() {
     const list = byId("queue-list");
     list.replaceChildren();
@@ -141,8 +147,11 @@
         meta.textContent = [item.status, item.platform, item.category, item.priceText, item.sellerName, submittedLabel].filter(Boolean).join(" · ");
         card.appendChild(meta);
         const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = item.description || "No description supplied."; card.appendChild(desc);
-        if (item.sellerContactUrl) {
-          const contact = document.createElement("a"); contact.href = item.sellerContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
+        const safeContactUrl = safeHttpUrl(item.sellerContactUrl);
+        if (safeContactUrl) {
+          const contact = document.createElement("a"); contact.href = safeContactUrl; contact.target = "_blank"; contact.rel = "noopener noreferrer"; contact.referrerPolicy = "no-referrer"; contact.textContent = "Open seller contact"; contact.style.color = "var(--cyan)"; card.appendChild(contact);
+        } else if (item.sellerContactUrl) {
+          const invalidContact = document.createElement("p"); invalidContact.className = "help"; invalidContact.textContent = "Seller contact link is invalid and has been hidden."; card.appendChild(invalidContact);
         }
         const id = document.createElement("p"); id.className = "help"; id.textContent = "Submission ID: " + item.id; card.appendChild(id);
         const reasonLabel = document.createElement("label"); reasonLabel.textContent = "Admin decision reason"; card.appendChild(reasonLabel);
