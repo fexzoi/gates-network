@@ -215,7 +215,6 @@ def test_admin_rejection_never_publishes(monkeypatch):
 
 
 def test_wix_query_status_reads_all_pages(monkeypatch):
-    import json
 
     requests = []
 
