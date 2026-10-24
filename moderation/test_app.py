@@ -215,7 +215,8 @@ def test_admin_rejection_never_publishes(monkeypatch):
 
 
 def test_wix_query_status_reads_all_pages(monkeypatch):
-
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
     requests = []
 
     class FakeResponse:
