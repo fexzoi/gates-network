@@ -1,0 +1,26 @@
+name: GTS moderation tests
+on:
+  push:
+    branches: [main, 'feat/gts-ai-moderation']
+    paths:
+      - 'moderation/**'
+      - '.github/workflows/gts-moderation-tests.yml'
+  pull_request:
+    paths:
+      - 'moderation/**'
+      - '.github/workflows/gts-moderation-tests.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moderation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: moderation/requirements.txt
+      - run: python -m pip install -r requirements.txt
+      - run: pytest -q
