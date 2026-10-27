@@ -305,18 +305,11 @@ def _wix_mark_moderated(item_id: str, status: str) -> None:
     response.raise_for_status()
 
 
-@app.post("/v1/wix/process-pending", dependencies=[Depends(_auth)])
-def process_wix_pending(limit: int = Query(default=5, ge=1, le=10)) -> dict:
-    """Staging-only batch processor. Requires explicit server-side enablement; never publishes."""
-    if not WIX_AUTOMATION_ENABLED:
-        raise HTTPException(status_code=503, detail="Wix automation is disabled until credentials and collection IDs are verified")
-    if not WIX_API_KEY or not WIX_SITE_ID:
-        raise HTTPException(status_code=503, detail="Wix server credentials are not configured")
-    try:
-        items = _wix_query_pending(limit)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail="Could not read Wix submissions; no listings were published") from exc
-
+def _process_pending_submissions(limit: int = 5) -> dict:
+    """AI-review pending Wix items; high-confidence low-risk approvals publish automatically."""
+    if not WIX_AUTOMATION_ENABLED or not WIX_API_KEY or not WIX_SITE_ID:
+        return {"processed": 0, "items": [], "published": False, "reason": "wix_automation_not_configured"}
+    items = _wix_query_pending(limit)
     results = []
     for item in items:
         data = item.get("data", item)
@@ -328,51 +321,64 @@ def process_wix_pending(limit: int = Query(default=5, ge=1, le=10)) -> dict:
         try:
             listing = ListingSubmission(
                 submission_id=submission_id,
-                title=data.get("title", ""),
-                platform=data.get("platform", ""),
-                category=data.get("category", ""),
-                description=data.get("description", ""),
-                price_text=data.get("priceText", ""),
-                seller_name=data.get("sellerName", ""),
-                seller_contact_url=data.get("sellerContactUrl", ""),
+                title=str(data.get("title") or data.get("productName") or ""),
+                platform=str(data.get("platform") or ""),
+                category=str(data.get("category") or ""),
+                description=str(data.get("description") or ""),
+                price_text=str(data.get("priceText") or ""),
+                seller_name=str(data.get("sellerName") or ""),
+                seller_contact_url=str(data.get("sellerContactUrl") or ""),
             )
-            # Idempotency check: completed decisions are reused rather than re-scored.
-            with _db() as connection:
-                previous = connection.execute(
-                    "SELECT * FROM moderation_audit WHERE submission_id = ? AND status = 'completed' ORDER BY created_at DESC LIMIT 1",
-                    (submission_id,),
-                ).fetchone()
-            if previous:
-                decision = Decision(
-                    decision=previous["decision"], risk_score=previous["risk_score"],
-                    confidence=previous["confidence"], reasons=json.loads(previous["reasons_json"]),
-                    policy_flags=json.loads(previous["policy_flags_json"]),
-                )
+            if not _valid_contact_url(listing.seller_contact_url):
+                decision = Decision(decision="reject", risk_score=95, confidence=100,
+                    reasons=["Seller contact must use a valid HTTP(S) URL."], policy_flags=["invalid_contact_url"])
             else:
-                if not _valid_contact_url(listing.seller_contact_url):
-                    decision = Decision(decision="reject", risk_score=90, confidence=100,
-                        reasons=["Seller contact must use an HTTP(S) URL."], policy_flags=["invalid_contact_url"])
-                else:
-                    decision = moderate_with_openai(listing)
-                if decision.decision == "approve" and (decision.risk_score >= 35 or decision.confidence < 75):
-                    decision.decision = "reject"
-                    decision.reasons.append("Conservative safety gate: approval threshold was not met.")
-                    decision.policy_flags.append("approval_threshold_not_met")
-                _audit(submission_id, decision, status="completed")
-            new_status = "AI Approved - Awaiting Publish" if decision.decision == "approve" else "AI Rejected"
-            _wix_mark_moderated(submission_id, new_status)
-            results.append({
-                "submission_id": submission_id,
-                "decision": decision.decision,
-                "status": new_status,
-                "reasons": decision.reasons,
-                "published": False,
-            })
+                decision = moderate_with_openai(listing)
+            if decision.decision == "approve" and (decision.risk_score >= 20 or decision.confidence < 90):
+                decision.decision = "reject"
+                decision.reasons.append("Automatic publishing safety gate: listing did not meet the stricter auto-approval threshold.")
+                decision.policy_flags.append("auto_approval_threshold_not_met")
+            if decision.decision == "reject":
+                _wix_patch_status(submission_id, "AI Rejected", "Pending review")
+                _audit(submission_id, decision, status="ai_rejected")
+                results.append({"submission_id": submission_id, "decision": "reject", "status": "AI Rejected", "reasons": decision.reasons, "published": False})
+                continue
+            # Never publish explicit internal/test records.
+            if listing.title.strip().upper().startswith(("TEMP TEST", "TEST ONLY")):
+                decision.decision = "reject"
+                decision.reasons.append("Internal test submission is not eligible for marketplace publication.")
+                decision.policy_flags.append("internal_test_not_publishable")
+                _wix_patch_status(submission_id, "AI Rejected", "Pending review")
+                _audit(submission_id, decision, status="ai_test_blocked")
+                results.append({"submission_id": submission_id, "decision": "reject", "status": "AI Rejected", "reasons": decision.reasons, "published": False})
+                continue
+            _wix_patch_status(submission_id, "Publishing", "Pending review")
+            try:
+                public_id = _wix_insert_public_listing(submission_id, data)
+                _wix_patch_status(submission_id, "Approved", "Publishing")
+            except Exception:
+                try:
+                    _wix_patch_status(submission_id, "Pending review", "Publishing")
+                except Exception:
+                    pass
+                raise
+            _audit(submission_id, decision, status="ai_approved_published")
+            results.append({"submission_id": submission_id, "decision": "approve", "status": "Approved", "reasons": decision.reasons, "published": True, "public_listing_id": public_id})
         except Exception as exc:
-            # Leave the CMS item pending if processing/update failed; log failure without publishing.
             _audit(submission_id, None, status="error", error_code=type(exc).__name__[:80])
             results.append({"submission_id": submission_id, "status": "error", "reason": "processing_failed", "published": False})
-    return {"processed": len(results), "items": results, "published": False}
+    return {"processed": len(results), "items": results, "published": any(item.get("published") for item in results)}
+
+
+@app.post("/v1/wix/process-pending", dependencies=[Depends(_auth)])
+def process_wix_pending(limit: int = Query(default=5, ge=1, le=10)) -> dict:
+    """Authenticated manual trigger for the same AI pipeline used by the background worker."""
+    if not WIX_AUTOMATION_ENABLED:
+        raise HTTPException(status_code=503, detail="Wix automation is disabled until credentials and collection IDs are verified")
+    try:
+        return _process_pending_submissions(limit)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="AI processing failed; no unconfirmed listing was published") from exc
 
 
 # Authenticated admin review workflow. Human decisions are required for publication.
@@ -542,3 +548,25 @@ def admin_decide_submission(submission_id: str, request: AdminDecisionRequest) -
     except Exception as exc:
         _audit(submission_id, None, status="admin_action_error", error_code=type(exc).__name__[:80])
         raise HTTPException(status_code=502, detail="Admin action could not be confirmed. Check the queue before retrying.") from exc
+
+
+// Background AI review: runs without an admin opening the dashboard.
+// Enable only after the OpenAI key and Wix collection permissions are configured.
+AUTO_AI_REVIEW_ENABLED = os.getenv("AUTO_AI_REVIEW_ENABLED", "false").lower() == "true"
+AUTO_AI_REVIEW_INTERVAL_SECONDS = max(30, int(os.getenv("AUTO_AI_REVIEW_INTERVAL_SECONDS", "60")))
+
+async def _automatic_ai_review_loop() -> None:
+    while True:
+        try:
+            if AUTO_AI_REVIEW_ENABLED and WIX_AUTOMATION_ENABLED and WIX_API_KEY and WIX_SITE_ID and os.getenv("OPENAI_API_KEY"):
+                await asyncio.to_thread(_process_pending_submissions, 5)
+        except Exception:
+            # Fail closed: background errors do not publish and the next cycle retries.
+            pass
+        await asyncio.sleep(AUTO_AI_REVIEW_INTERVAL_SECONDS)
+
+
+@app.on_event("startup")
+async def start_automatic_ai_review() -> None:
+    if AUTO_AI_REVIEW_ENABLED:
+        asyncio.create_task(_automatic_ai_review_loop())
