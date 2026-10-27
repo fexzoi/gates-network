@@ -131,9 +131,26 @@ def test_admin_decision_requires_authentication():
     assert response.status_code == 401
 
 
-def test_admin_queue_stays_disabled_until_wix_integration_enabled(monkeypatch):
+def test_admin_queue_is_read_only_while_decisions_are_disabled(monkeypatch):
     monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", False)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    monkeypatch.setattr(moderation_app, "_wix_query_status", lambda status, limit=100: [])
     response = client.get("/v1/wix/submissions", headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json()["items"] == []
+    assert response.json()["publishing_enabled"] is False
+
+
+def test_admin_decisions_stay_disabled_until_wix_integration_enabled(monkeypatch):
+    monkeypatch.setattr(moderation_app, "WIX_AUTOMATION_ENABLED", False)
+    monkeypatch.setattr(moderation_app, "WIX_API_KEY", "test-wix-key")
+    monkeypatch.setattr(moderation_app, "WIX_SITE_ID", "test-site-id")
+    response = client.post(
+        "/v1/wix/submissions/submission-123/decision",
+        json={"action": "reject", "reason": "Reviewed and rejected"},
+        headers=HEADERS,
+    )
     assert response.status_code == 503
     assert "disabled" in response.json()["detail"].lower()
 
