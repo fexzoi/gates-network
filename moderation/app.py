@@ -382,11 +382,15 @@ class AdminDecisionRequest(BaseModel):
     action: Literal["approve", "reject"]
     reason: str = Field(min_length=3, max_length=1000)
 
-def _require_wix_admin() -> None:
-    if not WIX_AUTOMATION_ENABLED:
-        raise HTTPException(status_code=503, detail="Wix admin workflow is disabled until CMS access is verified")
+def _require_wix_credentials() -> None:
     if not WIX_API_KEY or not WIX_SITE_ID:
         raise HTTPException(status_code=503, detail="Wix CMS server credentials are not configured")
+
+def _require_wix_admin() -> None:
+    # Keep approve/reject and AI processing disabled until the read-only Wix queue is verified.
+    if not WIX_AUTOMATION_ENABLED:
+        raise HTTPException(status_code=503, detail="Wix admin decisions are disabled until CMS access is verified")
+    _require_wix_credentials()
 
 def _wix_query_status(status: str, limit: int = 100) -> list[dict]:
     response = httpx.post(
@@ -454,8 +458,8 @@ def _wix_insert_public_listing(submission_id: str, data: dict) -> str:
 
 @app.get("/v1/wix/submissions", dependencies=[Depends(_auth)])
 def admin_list_submissions() -> dict:
-    """Load pending submissions and moderation counts for the authenticated admin console."""
-    _require_wix_admin()
+    """Read the Wix review queue without enabling approve/reject or AI processing."""
+    _require_wix_credentials()
     try:
         pending = []
         for review_status in ("Pending review", "AI Approved - Awaiting Publish", "AI Rejected"):
@@ -485,7 +489,7 @@ def admin_list_submissions() -> dict:
                 "submittedAt": data.get("submittedAt") or data.get("_createdDate") or "",
                 "status": data.get("status") or "Pending review",
             })
-        return {"items": items, "counts": counts, "publishing_enabled": True}
+        return {"items": items, "counts": counts, "publishing_enabled": bool(WIX_AUTOMATION_ENABLED and WIX_API_KEY and WIX_SITE_ID)}
     except HTTPException:
         raise
     except Exception as exc:
