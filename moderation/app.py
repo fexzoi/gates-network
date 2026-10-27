@@ -1,6 +1,7 @@
 """GTS AI moderation API — decision logging only; it never publishes listings."""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import secrets
@@ -550,8 +551,8 @@ def admin_decide_submission(submission_id: str, request: AdminDecisionRequest) -
         raise HTTPException(status_code=502, detail="Admin action could not be confirmed. Check the queue before retrying.") from exc
 
 
-// Background AI review: runs without an admin opening the dashboard.
-// Enable only after the OpenAI key and Wix collection permissions are configured.
+# Background AI review: runs without an admin opening the dashboard.
+# Enable only after the OpenAI key and Wix collection permissions are configured.
 AUTO_AI_REVIEW_ENABLED = os.getenv("AUTO_AI_REVIEW_ENABLED", "false").lower() == "true"
 AUTO_AI_REVIEW_INTERVAL_SECONDS = max(30, int(os.getenv("AUTO_AI_REVIEW_INTERVAL_SECONDS", "60")))
 
