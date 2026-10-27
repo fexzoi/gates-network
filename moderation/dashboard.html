@@ -29,7 +29,7 @@
 <section class="panel" style="margin-top:18px" id="wix-queue-panel">
 <h2>Live seller review queue</h2>
 <p class="help">Read pending submissions from Wix CMS. Approving publishes the listing; rejecting records a decision and reason. AI never auto-publishes.</p>
-<div class="actions" style="margin-bottom:14px"><button id="load-queue" class="btn">Load pending submissions</button><span id="queue-counts" class="pill">Queue not loaded</span></div>
+<div class="actions" style="margin-bottom:14px"><button id="load-queue" class="btn">Load pending submissions</button><button id="run-ai-queue" class="btn secondary">Run AI on pending</button><span id="queue-counts" class="pill">Queue not loaded</span></div><p class="help">Run AI on pending submissions to record recommendations in Wix. This does not publish listings; admins still decide.</p>
 <div id="queue-status" class="status" role="status"></div>
 <div id="queue-list" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));margin-top:14px"></div>
 </section>
@@ -171,6 +171,27 @@
     }
   }
   byId("load-queue").addEventListener("click", loadQueue);
+  byId("run-ai-queue").addEventListener("click", async () => {
+    const button = byId("run-ai-queue");
+    if (!token) { byId("queue-status").textContent = "Connect with your bearer token first."; return; }
+    if (!window.confirm("Run AI moderation on pending seller submissions? AI will not publish any listing.")) return;
+    button.disabled = true;
+    byId("queue-status").textContent = "AI is reviewing pending submissions…";
+    try {
+      const result = await api("/v1/wix/process-pending?limit=5", {method:"POST"});
+      const summary = (result.items || []).map(item =>
+        (item.submission_id || "Unknown submission") + ": " +
+        (item.decision ? item.decision.toUpperCase() + " — " + item.status : item.status) +
+        (item.reasons && item.reasons.length ? " (" + item.reasons.join("; ") + ")" : "")
+      );
+      byId("queue-status").textContent = "AI processed " + (result.processed || 0) +
+        " submission(s). Published: no. " + summary.join(" | ");
+      await loadQueue();
+      await loadAudit();
+    } catch (error) {
+      byId("queue-status").textContent = error.message + " AI did not publish anything. Check server configuration and audit history.";
+    } finally { button.disabled = false; }
+  });
 
 })();
 </script>
